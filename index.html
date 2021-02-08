@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Golf Team Builder</title>
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src * 'unsafe-inline' 'unsafe-eval'; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src * 'unsafe-inline'; img-src * data: blob: 'unsafe-inline'; frame-src *; style-src * 'unsafe-inline';" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="./modules/bulma.css">
+    <script src="./modules/vue.js"></script>
+    <script src="./modules/icons.js"></script>
+</head>
+
+<body style="background: white;">
+    <section id="app">
+        <nav class="navbar is-dark " role="navigation" aria-label="main navigation">
+            <div class="navbar-brand">
+                <a class="navbar-item">
+                    Draft King Golf Team Builder
+                </a>
+            </div>
+        </nav>
+
+        <section class="section">
+            <div class="container">
+
+                <div class="tabs is-boxed">
+                    <ul>
+                        <li :class="tab == 'import-players' ? 'is-active' : ''"><a @click="setTab('import-players')">Import</a></li>
+                        <li :class="tab == 'draft-pool' ? 'is-active' : ''"><a @click="setTab('draft-pool')">Draft Pool</a></li>
+                        <li :class="tab == 'bench' ? 'is-active' : ''"><a @click="setTab('bench')">Bench</a></li>
+                        <li :class="tab == 'teams' ? 'is-active' : ''"><a @click="setTab('teams')">Teams</a></li>
+                        <li :class="tab == 'draft-settings' ? 'is-active' : ''"><a @click="setTab('draft-settings')">Settings</a></li>
+                    </ul>
+                </div>
+
+                <section v-if="tab == 'import-players'" id="import-players">
+
+                    <div class="level">
+                        <div class="level-left">
+                            <div class="level-item">
+                                <h2 class="is-size-3">Player List</h2>
+                            </div>
+                        </div>
+
+                        <div class="level-right">
+                            <div class="level-item">
+                                <div class="file has-name is-dark">
+                                    <label class="file-label">
+                                        <input class="file-input" type="file" name="fileinput" id="fileinput"
+                                            @change="loadPlayers">
+                                        <span class="file-cta">
+                                            <span class="file-icon">
+                                                <i class="fas fa-upload"></i>
+                                            </span>
+                                            <span v-if="players && Object.keys(players).length > 0" class="file-label">
+                                                Choose a new file…
+                                            </span>
+                                            <span v-else class="file-label">
+                                                Choose a file…
+                                            </span>
+                                        </span>
+                                        <span class="file-name">
+
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div v-if="players && Object.keys(players).length > 0" class="table-container">
+                        <table class="table is-narrow is-fullwidth is-bordered is-striped" id="playerList">
+                            <thead>
+                                <th>Index</th>
+                                <th>Name</th>
+                                <th>Salary</th>
+                                <th>Points Per Game</th>
+                                <th>Team Count</th>
+                            </thead>
+                            <tr v-for="(row, rowIndex) in players" :key="rowIndex">
+                                <td>{{rowIndex}}</td>
+                                <td>{{row.Name}}</td>
+                                <td>{{row.Salary}}</td>
+                                <td>{{row.AvgPointsPerGame}}</td>
+                                <td>{{row.teamCount ? row.teamCount : 0}}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </section>
+
+                <section v-if="tab == 'draft-pool'" id="draft-pool">
+
+                    <div class="level">
+                        <div class="level-left">
+                            <div class="level-item">
+                                <h2 class="is-size-3">Draft Pool </h2>
+                            </div>
+                        </div>
+
+                        <!-- Right side -->
+                        <div class="level-right"
+                            v-if="(this.settings.minSalary && this.settings.minSalary > 0) || (this.settings.maxSalary && this.settings.maxSalary > 0) || (this.settings.minPointsPerGame && this.settings.minPointsPerGame > 0)">
+                            <p class="level-item"><strong>Bench By:</strong></p>
+                            <div class="level-item" v-if="this.settings.minSalary && this.settings.minSalary > 0">
+                                <button type="button" class="button" id="benchMinSalary"
+                                    @click="benchByMinSalary();">Min Salary</button>
+                            </div>
+                            <div class="level-item" v-if="this.settings.maxSalary && this.settings.maxSalary > 0">
+                                <button type="button" class="button" id="benchMaxSalary"
+                                    @click="benchByMaxSalary();">Max Salary</button>
+                            </div>
+                            <div class="level-item"
+                                v-if="this.settings.minPointsPerGame && this.settings.minPointsPerGame > 0">
+                                <button type="button" class="button" id="benchMinPoints"
+                                    @click="benchByMinPoints();">Min Points Per Game</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-if="draftPool && Object.keys(draftPool).length > 0" class="table-container">
+                        <table class="table is-narrow is-fullwidth is-bordered is-striped" id="draftPool">
+                            <thead>
+                                <th>Name</th>
+                                <th>Salary</th>
+                                <th>Points Per Game</th>
+                                <th>Actions</th>
+                            </thead>
+                            <tr v-for="(row, rowIndex) in draftPool" :key="rowIndex">
+                                <td>{{row.Name}}</td>
+                                <td>{{row.Salary}}</td>
+                                <td>{{row.AvgPointsPerGame}}</td>
+                                <td>
+                                    <button type="button" class="button is-danger"
+                                        @click="setManualBench(row.ID)">Bench</button>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </section>
+
+                <section v-if="tab == 'bench'" id="bench">
+                    <h2 class="is-size-3">Bench</h2>
+                    <div v-if="bench && Object.keys(bench).length > 0" class="table-container">
+                        <table class="table is-narrow is-fullwidth is-bordered is-striped" id="benchTable">
+                            <thead>
+                                <th>Name</th>
+                                <th>Salary</th>
+                                <th>Points Per Game</th>
+                                <th>Actions</th>
+                            </thead>
+                            <tr v-for="(row, rowIndex) in bench" :key="rowIndex">
+                                <td>{{row.Name}}</td>
+                                <td>{{row.Salary}}</td>
+                                <td>{{row.AvgPointsPerGame}}</td>
+                                <td>
+                                    <button type="button" class="button is-success"
+                                        @click="removeManualBench(row.ID)">Un-Bench</button>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div v-else>
+                        <p>The bench is currently empty.</p>
+                    </div>
+                </section>
+
+                <section v-if="tab == 'teams'" id="teams">
+                    <div class="level">
+                        <div class="level-left" v-if="Object.keys(teams).length > 0">
+                            <p class="is-size-3">Team List</p>
+                        </div>
+                        <div v-else></div>
+
+
+                        <div class="level-right" v-if="Object.keys(teams).length > 0">
+                            <div class="level-item">
+                                <button type="button" class=" button" @click="exportTeamsCSV()">Export Teams</button>
+                            </div>
+                            <div class="level-item">
+                                <button type="button" class=" button is-danger" @click="removeTeams();">Remove Teams</button>
+                            </div>
+                        </div>
+                        <div class="level-right" v-else>
+                            <div class="level-item">
+                                <button type="button" class="button is-dark" @click="buildTeams();">Draft</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-container" id="teamList" v-if="teams && Object.keys(teams).length > 0">
+                        <table class="table is-narrow is-fullwidth">
+                            <thead>
+                                <th>Team</th>
+                                <th>Player 1</th>
+                                <th>Player 2</th>
+                                <th>Player 3</th>
+                                <th>Player 4</th>
+                                <th>Player 5</th>
+                                <th>Player 6</th>
+                                <th>Salary</th>
+                                <th>Average Points</th>
+                                <th>Max/Min Diff</th>
+                            </thead>
+                            <tr v-for="(team, teamIndex) of Object.values(teams)" :key="teamIndex">
+                                <td>{{teamIndex + 1}}</td>
+                                <td v-for="(player, playerIndex) of team.players" :key="playerIndex">
+                                    {{player.displayName}}</td>
+                                <td>{{team.salaryCap}}</td>
+                                <td>{{team.averagePoints}}</td>
+                                <td>{{team.differential}}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div v-else>
+                        <p>Please click the <strong>Draft</strong> button to built the team list.</p>
+                    </div>
+                </section>
+
+                <section v-if="tab == 'draft-settings'" id="draft-settings">
+                    <div style="width: 30%;">
+                        <h2 class="is-size-3">Required Settings</h2>
+                        <br>
+                        <label>Team Count: <input type="text" id="teamCount" class="input"
+                                v-model="settings.teamCount"></label>
+                        <br><br>
+                        <label>Team Size: <input type="text" id="teamSize" class="input"
+                                v-model="settings.teamSize"></label>
+                        <br><br>
+                        <label>Cap Top Limit: <input type="text" id="topLimit" class="input"
+                                v-model="settings.upperLimit"></label>
+                        <br><br>
+                        <label>Cap Bottom Limit: <input type="text" id="bottomLimit" class="input"
+                                v-model="settings.lowerLimit"></label>
+                        <br><br>
+                        <h2 class="is-size-3">Optional Settings</h2>
+                        <br>
+                        <h2 class="is-size-4">Player Settings <span class="is-size-6">(Manual Buttons)</span></h2>
+                        <br>
+                        <label>Max Player Salary: <input type="text" id="max-player-salary" class="input"
+                                v-model="settings.maxSalary"></label>
+                        <br><br>
+                        <label>Min Player Salary: <input type="text" id="min-player-salary" class="input"
+                                v-model="settings.minSalary"></label>
+                        <br><br>
+                        <label>Min Points Per Game: <input type="text" id="min-points-per-game" class="input"
+                                v-model="settings.minPointsPerGame"></label>
+                        <br><br>
+                        <h2 class="is-size-4">Team Settings <span class="is-size-6">(Automatic During Draft)</span></h2>
+                        <br>
+                        <label>Min Average Points: <input type="text" id="min-team-average-points" class="input"
+                                v-model="settings.minTeamAveragePoints"></label>
+                        <br><br>
+                        <label>Max Team Differential: <input type="text" id="max-team-differential" class="input"
+                                v-model="settings.maxTeamDifferential"></label>
+                        <br><br>
+                        <button class="button is-dark" @click="saveSettings()">Save Settings</button>
+                    </div>
+                </section>
+
+            </div>
+        </section>
+        <div v-if="notificationMessage" class="notification is-primary"
+            style="position: absolute; top: 150px; right: 20px;">
+            {{notificationMessage}}
+        </div>
+    </section>
+    <script src="./modules/data.js"></script>
+    <script src="./modules/table.js"></script>
+    <script src="./modules/team.js"></script>
+    <script src="./modules/randomDraft.js"></script>
+    <script src="./modules/papaparse.min.js"></script>
+    <script src="./app.js"></script>
+</body>
+</html>
