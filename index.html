@@ -79,6 +79,7 @@
                                 <th>Salary</th>
                                 <th>Points Per Game</th>
                                 <th>Team Count</th>
+                                <th>Actions</th>
                             </thead>
                             <tr v-for="(row, rowIndex) in players" :key="rowIndex">
                                 <td>{{rowIndex}}</td>
@@ -86,6 +87,10 @@
                                 <td>{{row.Salary}}</td>
                                 <td>{{row.AvgPointsPerGame}}</td>
                                 <td>{{row.teamCount ? row.teamCount : 0}}</td>
+                                <td>
+                                    <button v-if="getCutStatus(row.ID)" type="button" class="button is-success" @click="setMissedCut(row.ID)">Made Cut</button>
+                                    <button  v-else type="button" class="button is-danger" @click="setMadeCut(row.ID)">Missed Cut</button>
+                                </td>
                             </tr>
                         </table>
                     </div>
@@ -203,6 +208,7 @@
                                 <th>Salary</th>
                                 <th>Average Points</th>
                                 <th>Max/Min Diff</th>
+                                <th>Cut Count</th>
                             </thead>
                             <tr v-for="(team, teamIndex) of Object.values(teams)" :key="teamIndex">
                                 <td>{{teamIndex + 1}}</td>
@@ -211,6 +217,7 @@
                                 <td>{{team.salaryCap}}</td>
                                 <td>{{team.averagePoints}}</td>
                                 <td>{{team.differential}}</td>
+                                <td>{{getTeamCutCount(team)}}</td>
                             </tr>
                         </table>
                     </div>
@@ -256,6 +263,13 @@
                         <label>Max Team Differential: <input type="text" id="max-team-differential" class="input"
                                 v-model="settings.maxTeamDifferential"></label>
                         <br><br>
+
+
+                        <label>Player Usage Limit: <input type="text" id="playerUsageLimit" class="input"
+                            v-model="settings.playerUsageLimit"></label>
+                        <br><br>
+
+
                         <button class="button is-dark" @click="saveSettings()">Save Settings</button>
                     </div>
                 </section>

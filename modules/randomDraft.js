@@ -1,4 +1,4 @@
-function Draft (playerList, lowerLimit, upperLimit, teamSize, teamCount, minAveragePoints = 0, maxDifferential = 0) {
+function Draft (playerList, lowerLimit, upperLimit, teamSize, teamCount, minAveragePoints = 0, maxDifferential = 0, playerUsageLimit = 0) {
     this.playerList = playerList
     let playerIDs = Object.keys(playerList)
     this.playerIDs = playerIDs
@@ -11,6 +11,8 @@ function Draft (playerList, lowerLimit, upperLimit, teamSize, teamCount, minAver
     this.teams = []
     this.teamIDs = []
     this.failureCount = 0
+    this.playerUsageLimit = playerUsageLimit
+    this.initUsageCount()
 }
 
 Draft.prototype.buildRandomTeams = function() {
@@ -23,6 +25,7 @@ Draft.prototype.buildRandomTeams = function() {
             if(this.hasDraftRequirements(team)) {
                 this.teamIDs.push(team.id)
                 this.teams[team.id] = team
+                this.increaseTeamPlayersUsageLimit(team.players)
             } else {
                 this.failureCount += 1
                 Vue.set(this, 'failureCount', this.failureCount)
@@ -90,8 +93,15 @@ Draft.prototype.findUnusedPlayer = function(team) {
     while(!playerFound) {
         let randomIndex = this.getRandomValidInt()
         let randomIndexValue = this.playerIDs[randomIndex]
-        if(! team.players[randomIndexValue] ) {
-            return this.playerList[randomIndexValue]
+        if(! team.players[randomIndexValue]) {
+            // Check usage limit
+            if(this.playerUsageLimit && this.playerUsageLimit > 0) {
+                if(this.playerList[randomIndexValue].usageCount < this.playerUsageLimit) {
+                    return this.playerList[randomIndexValue]
+                }
+            } else {
+                return this.playerList[randomIndexValue]
+            }
         }
     }
 }
@@ -101,4 +111,16 @@ Draft.prototype.getRandomValidInt = function() {
     let max = Math.floor(this.playerIDs.length);
     let randomInt = Math.floor(Math.random() * (max - min) + min); //The maximum is exclusive and the minimum is inclusive
     return randomInt
+}
+
+Draft.prototype.initUsageCount = function() {
+    Object.values(this.playerList).forEach(player => {
+        player.usageCount = 0
+    })
+}
+
+Draft.prototype.increaseTeamPlayersUsageLimit = function(team) {
+    Object.values(team).forEach(player => {
+        this.playerList[player.ID].usageCount += 1
+    })
 }

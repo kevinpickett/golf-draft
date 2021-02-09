@@ -2,12 +2,12 @@ const App = new Vue({
   el: '#app',
   data: function(){
     return {
-      loading: false,
       players: {},
       draftPool: {},
       bench: {},
       teams: {},
       manualBench: {},
+      cuts: [],
       draft: null,
       tab: 'import-players',
       notificationMessage: false,
@@ -20,7 +20,8 @@ const App = new Vue({
         maxSalary: 0,
         minPointsPerGame: 0,
         minTeamAveragePoints: 0,
-        maxTeamDifferential: 0
+        maxTeamDifferential: 0,
+        playerUsageLimit: 0,
       }
     }
   },
@@ -36,8 +37,10 @@ const App = new Vue({
       this.settings.minPointsPerGame = settings.minPointsPerGame
       this.settings.minTeamAveragePoints = settings.minTeamAveragePoints
       this.settings.maxTeamDifferential = settings.maxTeamDifferential
+      this.settings.playerUsageLimit = settings.playerUsageLimit
     }
     this.loadPlayersFromStorage()
+    this.initPlayersCut()
     this.loadDraftPoolFromStorage()
     this.loadBenchFromStorage()
     this.loadTeamsFromStorage()
@@ -45,6 +48,7 @@ const App = new Vue({
   },
   methods: {
     async loadPlayers(event) {
+      window.localStorage.removeItem('draftCuts')
       await importCSV(event)
       this.loadPlayersFromStorage()
       let draftPool = {}
@@ -54,6 +58,7 @@ const App = new Vue({
       this.draftPool = draftPool
       this.bench = {}
       this.teams = {}
+      this.cuts = []
       this.saveDraftPool(this.draftPool)
       this.saveBench(this.bench)
       window.localStorage.removeItem('draftTeams')
@@ -112,9 +117,10 @@ const App = new Vue({
         this.settings.teamSize, 
         this.settings.teamCount,
         this.settings.minTeamAveragePoints,
-        this.settings.maxTeamDifferential
+        this.settings.maxTeamDifferential,
+        this.settings.playerUsageLimit,
       )
-      this.draft.buildRandomTeams()
+      this.draft.buildRandomTeams(this)
       
       let encodedTeams = JSON.stringify(Object.values(this.draft.teams))
       window.localStorage.setItem('draftTeams', encodedTeams)
@@ -153,6 +159,21 @@ const App = new Vue({
       this.saveDraftPool(this.draftPool)
       this.saveBench(this.bench)
     },
+    setMadeCut(playerID) {
+      this.cuts.push(playerID)
+      let encodedPlayers = JSON.stringify(Object.values(this.cuts))
+      window.localStorage.setItem('draftCuts', encodedPlayers)
+      this.$forceUpdate()
+    },
+    setMissedCut(playerID) {
+      let index = this.cuts.indexOf(playerID)
+      if(index != -1){
+        this.cuts.splice(index, 1)
+     }
+      let encodedPlayers = JSON.stringify(Object.values(this.cuts))
+      window.localStorage.setItem('draftCuts', encodedPlayers)
+      this.$forceUpdate()
+    },
     saveDraftPool(pool) {
       let encodedPlayers = JSON.stringify(Object.values(pool))
       window.localStorage.setItem('draftPool', encodedPlayers)
@@ -174,7 +195,8 @@ const App = new Vue({
         maxSalary: this.settings.maxSalary,
         minPointsPerGame: this.settings.minPointsPerGame,
         minTeamAveragePoints: this.settings.minTeamAveragePoints,
-        maxTeamDifferential: this.settings.maxTeamDifferential
+        maxTeamDifferential: this.settings.maxTeamDifferential,
+        playerUsageLimit: this.settings.playerUsageLimit
       }
       let encodedSettings = JSON.stringify(settings)
       window.localStorage.setItem('draftSettings', encodedSettings)
@@ -259,6 +281,24 @@ const App = new Vue({
           })
         })
       }
+    },
+    initPlayersCut() {
+      let players = this.loadFromStorage('draftCuts')
+      if(players) {
+        this.cuts = players
+      } 
+    },
+    getCutStatus(playerID) {
+      return this.cuts.includes(playerID)
+    },
+    getTeamCutCount(team) {
+      let count = 0
+      for(const [key, player] of Object.entries(team.players)){
+        if(this.cuts.includes(player.ID)) {
+          count += 1
+        }
+      }
+      return count
     }
   }
 })

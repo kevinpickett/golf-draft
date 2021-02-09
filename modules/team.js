@@ -64,9 +64,3 @@ Team.prototype.getDifferential = function() {
     this.differential = max - min
 }
 
-Team.prototype.getBenchStatus - function() {
-    for(const [key, player] of Object.entries(this.players)) {
-        player.benched = false
-    }
-}
-
