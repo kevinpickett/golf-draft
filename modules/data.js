@@ -22,7 +22,7 @@ function importDataFromLocalStorage() {
 
 function exportData(data) {
     return new Promise(resolve => {
-        let jsonData = JSON.stringify(data._data)
+        let jsonData = JSON.stringify(data)
         let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(jsonData);
         let dlAnchorElem = document.getElementById('downloadAnchorElem');
         let filename = "draft_teams_backup_" + Date.now() + ".json"
