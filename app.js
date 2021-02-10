@@ -28,6 +28,7 @@ const App = new Vue({
         playerUsageLimit: 0,
       },
       password: '',
+      pass: '',
       showScreen: false
     }
   },
@@ -321,7 +322,7 @@ const App = new Vue({
       }
     },
     passcodeUpdate() {
-      let pass = this.password.toLowerCase
+      let pass = this.pass.toLowerCase
       if(pass == 'blake') {
         this.showScreen = true
       }
