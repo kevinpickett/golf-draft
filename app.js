@@ -320,6 +320,12 @@ const App = new Vue({
         window.removeEventListener('keydown', this.passcode)
       }
     },
+    passcodeUpdate() {
+      let pass = this.password.toLowerCase
+      if(pass == 'blake') {
+        this.showScreen = true
+      }
+    },
     async removePlayer(playerID) {
       // Confirm Removal
       let confirmation = confirm('Removing a player will cause the teams the player was on to be rebuilt. Confirm to proceed.')
