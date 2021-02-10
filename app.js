@@ -28,7 +28,6 @@ const App = new Vue({
         playerUsageLimit: 0,
       },
       password: '',
-      pass: '',
       showScreen: false
     }
   },
@@ -319,12 +318,6 @@ const App = new Vue({
       if(this.password.includes('blake')){
         this.showScreen = true
         window.removeEventListener('keydown', this.passcode)
-      }
-    },
-    passcodeUpdate() {
-      let pass = this.pass.toLowerCase
-      if(pass == 'blake') {
-        this.showScreen = true
       }
     },
     async removePlayer(playerID) {
