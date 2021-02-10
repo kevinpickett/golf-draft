@@ -3,6 +3,7 @@ const App = new Vue({
   data: function(){
     return {
       players: {},
+      playerSearch: '',
       draftPool: {},
       bench: {},
       teams: {},
@@ -110,7 +111,7 @@ const App = new Vue({
       let parsedData = JSON.parse(data)
       return parsedData
     },
-    buildTeams() {
+    buildTeams(isRebuild = false) {
       this.draft = new Draft(this.draftPool, 
         this.settings.lowerLimit, 
         this.settings.upperLimit, 
@@ -120,7 +121,11 @@ const App = new Vue({
         this.settings.maxTeamDifferential,
         this.settings.playerUsageLimit,
       )
-      this.draft.buildRandomTeams(this)
+      if(isRebuild) {
+        this.draft.reBuild(this.teams)
+      } else {
+        this.draft.buildRandomTeams()
+      }
       
       let encodedTeams = JSON.stringify(Object.values(this.draft.teams))
       window.localStorage.setItem('draftTeams', encodedTeams)
@@ -299,6 +304,75 @@ const App = new Vue({
         }
       }
       return count
+    },
+    async removePlayer(playerID) {
+      // Confirm Removal
+      let confirmation = confirm('Removing a player will cause the teams the player was on to be rebuilt. Confirm to proceed.')
+      
+      if(confirmation) {
+      // Remove Player From Draft Pool && Main List
+        await this.deletePlayer(playerID)
+        let removedTeamCount = 0
+        let index = 1
+        let editedTeams = []
+        for(const [key, team] of Object.entries(this.teams)){
+          if(team.players[playerID]) {
+            // Get Players
+            let players = team.players
+            // Remove Current Player From Teams
+            delete players[playerID]
+            // Save
+            this.teams[key].players = players
+            removedTeamCount += 1
+            editedTeams.push(index)
+          }
+          index++
+        }
+        // Find new players that work for each team
+        if(removedTeamCount > 0) {
+          this.buildTeams(true)
+          this.notificationMessage = "Edited Teams: " + editedTeams.toString()
+          setTimeout(() => { this.notificationMessage = false }, 5000); 46,54,58,63
+        }
+      }      
+    },
+    deletePlayer(playerID) {
+      return new Promise(resolve => {
+        if(this.players[playerID]) {
+          Vue.delete(this.players, playerID)
+          let encodedPlayers = JSON.stringify(Object.values(this.players))
+          window.localStorage.setItem('fileContent', encodedPlayers)
+        }
+        if(this.draftPool[playerID]) {
+          Vue.delete(this.draftPool, playerID)
+          let encodedPlayers = JSON.stringify(Object.values(this.draftPool))
+          window.localStorage.setItem('draftPool', encodedPlayers)
+        }
+        if(this.bench[playerID]) {
+          Vue.delete(this.bench, playerID)
+          let encodedPlayers = JSON.stringify(Object.values(this.bench))
+          window.localStorage.setItem('draftBench', encodedPlayers)
+        }
+        if(this.manualBench[playerID]) {
+          Vue.delete(this.manualBench, playerID)
+        }
+        if(this.cuts.includes(playerID)) {
+          Vue.delete(this.cuts, playerID)
+          let encodedPlayers = JSON.stringify(Object.values(this.cuts))
+          window.localStorage.setItem('draftCuts', encodedPlayers)
+        }
+        resolve(true)
+      })
+    },
+    textSearch(players) {
+      if(this.playerSearch == '') {
+        return true
+      } else {
+        let text = this.playerSearch.toLowerCase()
+        let names = Object.values(players).map(player => player.Name.toLowerCase()).toString()
+        return names.includes(text)
+      }
+      
     }
   }
 })

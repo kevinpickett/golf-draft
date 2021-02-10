@@ -88,8 +88,25 @@
                                 <td>{{row.AvgPointsPerGame}}</td>
                                 <td>{{row.teamCount ? row.teamCount : 0}}</td>
                                 <td>
-                                    <button v-if="getCutStatus(row.ID)" type="button" class="button is-success" @click="setMissedCut(row.ID)">Made Cut</button>
-                                    <button  v-else type="button" class="button is-danger" @click="setMadeCut(row.ID)">Missed Cut</button>
+                                    <p class="buttons">
+                                        <button v-if="getCutStatus(row.ID)" class="button is-success is-small is-outlined" title="Click will mark for missed cut." @click="setMissedCut(row.ID)">
+                                            <span class="icon is-small">
+                                            <i class="fas fa-thumbs-up fa-lg"></i>
+                                            </span>
+                                        </button>
+                                        <button v-else class="button is-danger is-small is-outlined" title="Click will mark for made cut" @click="setMadeCut(row.ID)">
+                                            <span class="icon is-small">
+                                            <i class="fas fa-thumbs-down fa-lg"></i>
+                                            </span>
+                                        </button>
+                                        <button class="button is-danger is-small is-outlined" title="Remove from teams. Spot will be randomly filled." @click="removePlayer(row.ID);">
+                                            <span class="icon is-small">
+                                            <i class="fas fa-trash fa-lg"></i>
+                                            </span>
+                                        </button>
+                                    </p>
+
+
                                 </td>
                             </tr>
                         </table>
@@ -138,8 +155,13 @@
                                 <td>{{row.Salary}}</td>
                                 <td>{{row.AvgPointsPerGame}}</td>
                                 <td>
-                                    <button type="button" class="button is-danger"
-                                        @click="setManualBench(row.ID)">Bench</button>
+                                    <p class="buttons">
+                                        <button class="button is-danger is-small is-outlined" title="Place on bench." @click="setManualBench(row.ID);">
+                                            <span class="icon is-small">
+                                            <i class="fas fa-user-minus fa-lg"></i>
+                                            </span>
+                                        </button>
+                                    </p>
                                 </td>
                             </tr>
                         </table>
@@ -161,8 +183,13 @@
                                 <td>{{row.Salary}}</td>
                                 <td>{{row.AvgPointsPerGame}}</td>
                                 <td>
-                                    <button type="button" class="button is-success"
-                                        @click="removeManualBench(row.ID)">Un-Bench</button>
+                                    <p class="buttons">
+                                        <button class="button is-success is-small is-outlined" title="Remove from bench." @click="removeManualBench(row.ID);">
+                                            <span class="icon is-small">
+                                            <i class="fas fa-user-plus fa-lg"></i>
+                                            </span>
+                                        </button>
+                                    </p>
                                 </td>
                             </tr>
                         </table>
@@ -175,7 +202,12 @@
                 <section v-if="tab == 'teams'" id="teams">
                     <div class="level">
                         <div class="level-left" v-if="Object.keys(teams).length > 0">
-                            <p class="is-size-3">Team List</p>
+                            <div class="level-item">
+                                <p class="is-size-3">Team List</p>
+                            </div>
+                            <div class="level-item">
+                                <input type="text" class="input" placeholder="Search..." v-model="playerSearch">
+                            </div>
                         </div>
                         <div v-else></div>
 
@@ -210,7 +242,9 @@
                                 <th>Max/Min Diff</th>
                                 <th>Cut Count</th>
                             </thead>
-                            <tr v-for="(team, teamIndex) of Object.values(teams)" :key="teamIndex">
+                            <template v-for="(team, teamIndex) of Object.values(teams)" > 
+                            <tr :key="teamIndex" v-if="textSearch(team.players)">
+                                
                                 <td>{{teamIndex + 1}}</td>
                                 <td v-for="(player, playerIndex) of team.players" :key="playerIndex">
                                     {{player.displayName}}</td>
@@ -218,7 +252,9 @@
                                 <td>{{team.averagePoints}}</td>
                                 <td>{{team.differential}}</td>
                                 <td>{{getTeamCutCount(team)}}</td>
+                                
                             </tr>
+                            </template>
                         </table>
                     </div>
                     <div v-else>

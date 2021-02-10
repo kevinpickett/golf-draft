@@ -40,9 +40,37 @@ Draft.prototype.buildRandomTeams = function() {
     console.log('Failure Count: ' + this.failureCount)
 }
 
-Draft.prototype.buildTeam = function() {
+Draft.prototype.reBuild = function(teams) {
+    for(const [key, oldTeam] of Object.entries(teams)){
+        let team
+        if(Object.keys(oldTeam.players).length == this.teamSize) {
+            team = new Team(this.teamSize)
+            team.players = oldTeam.players
+            team.setComputedValues()
+            this.teamIDs.push(team.id)
+            this.teams[team.id] = team
+            this.increaseTeamPlayersUsageLimit(team.players)
+        } else {
+            let teamFound = false
+            while(!teamFound) {
+                team = this.buildTeam(JSON.parse(JSON.stringify(oldTeam.players)))
+                if(this.hasDraftRequirements(team)) {
+                    this.teamIDs.push(team.id)
+                    this.teams[team.id] = team
+                    this.increaseTeamPlayersUsageLimit(team.players)
+                    teamFound = true
+                }
+            }
+        }
+    }
+}
+
+Draft.prototype.buildTeam = function(partialTeam = {}) {
     let team = new Team(this.teamSize)
     let player;
+    if(Object.keys(partialTeam).length > 0) {
+        team.players = partialTeam
+    }
     while(Object.keys(team.players).length < this.teamSize) {
         player = this.findUnusedPlayer(team)
         team.players[player.ID] = player
