@@ -19,3 +19,33 @@ function importDataFromLocalStorage() {
         inputData = JSON.parse(possibleData)
     }
 }
+
+function exportData(data) {
+    return new Promise(resolve => {
+        let jsonData = JSON.stringify(data._data)
+        let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(jsonData);
+        let dlAnchorElem = document.getElementById('downloadAnchorElem');
+        let filename = "draft_teams_backup_" + Date.now() + ".json"
+        dlAnchorElem.setAttribute("href",     dataStr     );
+        dlAnchorElem.setAttribute("download", filename);
+        dlAnchorElem.click();
+        resolve(true)
+    })
+}
+
+function importData(evt) {
+    return new Promise(resolve => {
+        let files = evt.target.files;
+        if (!files.length) {
+            alert('No file selected!');
+            return;
+        }
+        let file = files[0];
+        let reader = new FileReader();
+        reader.onload = (event) => {
+            window.localStorage.setItem('dataImport', event.target.result)
+            resolve(true)
+        };
+        reader.readAsText(file);
+    })
+}

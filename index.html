@@ -14,7 +14,7 @@
 
 <body style="background: white;">
     <section id="app">
-        <nav class="navbar is-dark " role="navigation" aria-label="main navigation">
+        <nav v-if="showScreen" class="navbar is-dark " role="navigation" aria-label="main navigation">
             <div class="navbar-brand">
                 <a class="navbar-item">
                     Draft King Golf Team Builder
@@ -22,7 +22,7 @@
             </div>
         </nav>
 
-        <section class="section">
+        <section class="section" v-if="showScreen">
             <div class="container">
 
                 <div class="tabs is-boxed">
@@ -41,6 +41,9 @@
                         <div class="level-left">
                             <div class="level-item">
                                 <h2 class="is-size-3">Player List</h2>
+                            </div>
+                            <div class="level-item">
+                                <input type="text" class="input" placeholder="Search..." v-model="playerSearch">
                             </div>
                         </div>
 
@@ -81,34 +84,34 @@
                                 <th>Team Count</th>
                                 <th>Actions</th>
                             </thead>
-                            <tr v-for="(row, rowIndex) in players" :key="rowIndex">
-                                <td>{{rowIndex}}</td>
-                                <td>{{row.Name}}</td>
-                                <td>{{row.Salary}}</td>
-                                <td>{{row.AvgPointsPerGame}}</td>
-                                <td>{{row.teamCount ? row.teamCount : 0}}</td>
-                                <td>
-                                    <p class="buttons">
-                                        <button v-if="getCutStatus(row.ID)" class="button is-success is-small is-outlined" title="Click will mark for missed cut." @click="setMissedCut(row.ID)">
-                                            <span class="icon is-small">
-                                            <i class="fas fa-thumbs-up fa-lg"></i>
-                                            </span>
-                                        </button>
-                                        <button v-else class="button is-danger is-small is-outlined" title="Click will mark for made cut" @click="setMadeCut(row.ID)">
-                                            <span class="icon is-small">
-                                            <i class="fas fa-thumbs-down fa-lg"></i>
-                                            </span>
-                                        </button>
-                                        <button class="button is-danger is-small is-outlined" title="Remove from teams. Spot will be randomly filled." @click="removePlayer(row.ID);">
-                                            <span class="icon is-small">
-                                            <i class="fas fa-trash fa-lg"></i>
-                                            </span>
-                                        </button>
-                                    </p>
-
-
-                                </td>
-                            </tr>
+                            <template v-for="(row, rowIndex) in players">
+                                <tr v-if="textSearchName(row.Name, playerSearch)"  :key="rowIndex">
+                                    <td>{{rowIndex}}</td>
+                                    <td>{{row.Name}}</td>
+                                    <td>{{row.Salary}}</td>
+                                    <td>{{row.AvgPointsPerGame}}</td>
+                                    <td>{{row.teamCount ? row.teamCount : 0}}</td>
+                                    <td>
+                                        <p class="buttons">
+                                            <button v-if="getCutStatus(row.ID)" class="button is-success is-small is-outlined" title="Click will mark for missed cut." @click="setMissedCut(row.ID)">
+                                                <span class="icon is-small">
+                                                <i class="fas fa-thumbs-up fa-lg"></i>
+                                                </span>
+                                            </button>
+                                            <button v-else class="button is-danger is-small is-outlined" title="Click will mark for made cut" @click="setMadeCut(row.ID)">
+                                                <span class="icon is-small">
+                                                <i class="fas fa-thumbs-down fa-lg"></i>
+                                                </span>
+                                            </button>
+                                            <button class="button is-danger is-small is-outlined" title="Remove from teams. Spot will be randomly filled." @click="removePlayer(row.ID);">
+                                                <span class="icon is-small">
+                                                <i class="fas fa-trash fa-lg"></i>
+                                                </span>
+                                            </button>
+                                        </p>
+                                    </td>
+                                </tr>
+                            </template>
                         </table>
                     </div>
                 </section>
@@ -119,6 +122,9 @@
                         <div class="level-left">
                             <div class="level-item">
                                 <h2 class="is-size-3">Draft Pool </h2>
+                            </div>
+                            <div class="level-item">
+                                <input type="text" class="input" placeholder="Search..." v-model="draftPoolPlayerSearch">
                             </div>
                         </div>
 
@@ -150,26 +156,35 @@
                                 <th>Points Per Game</th>
                                 <th>Actions</th>
                             </thead>
-                            <tr v-for="(row, rowIndex) in draftPool" :key="rowIndex">
-                                <td>{{row.Name}}</td>
-                                <td>{{row.Salary}}</td>
-                                <td>{{row.AvgPointsPerGame}}</td>
-                                <td>
-                                    <p class="buttons">
-                                        <button class="button is-danger is-small is-outlined" title="Place on bench." @click="setManualBench(row.ID);">
-                                            <span class="icon is-small">
-                                            <i class="fas fa-user-minus fa-lg"></i>
-                                            </span>
-                                        </button>
-                                    </p>
-                                </td>
-                            </tr>
+                            <template v-for="(row, rowIndex) in draftPool">
+                                <tr v-if="textSearchName(row.Name, draftPoolPlayerSearch)" :key="rowIndex">
+                                    <td>{{row.Name}}</td>
+                                    <td>{{row.Salary}}</td>
+                                    <td>{{row.AvgPointsPerGame}}</td>
+                                    <td>
+                                        <p class="buttons">
+                                            <button class="button is-danger is-small is-outlined" title="Place on bench." @click="setManualBench(row.ID);">
+                                                <span class="icon is-small">
+                                                <i class="fas fa-user-minus fa-lg"></i>
+                                                </span>
+                                            </button>
+                                        </p>
+                                    </td>
+                                </tr>
+                            </template>
                         </table>
                     </div>
                 </section>
 
                 <section v-if="tab == 'bench'" id="bench">
-                    <h2 class="is-size-3">Bench</h2>
+                    <div class="level-left">
+                        <div class="level-item">
+                            <h2 class="is-size-3">Bench</h2>
+                        </div>
+                        <div class="level-item">
+                            <input type="text" class="input" placeholder="Search..." v-model="benchPlayerSearch">
+                        </div>
+                    </div>
                     <div v-if="bench && Object.keys(bench).length > 0" class="table-container">
                         <table class="table is-narrow is-fullwidth is-bordered is-striped" id="benchTable">
                             <thead>
@@ -178,20 +193,22 @@
                                 <th>Points Per Game</th>
                                 <th>Actions</th>
                             </thead>
-                            <tr v-for="(row, rowIndex) in bench" :key="rowIndex">
-                                <td>{{row.Name}}</td>
-                                <td>{{row.Salary}}</td>
-                                <td>{{row.AvgPointsPerGame}}</td>
-                                <td>
-                                    <p class="buttons">
-                                        <button class="button is-success is-small is-outlined" title="Remove from bench." @click="removeManualBench(row.ID);">
-                                            <span class="icon is-small">
-                                            <i class="fas fa-user-plus fa-lg"></i>
-                                            </span>
-                                        </button>
-                                    </p>
-                                </td>
-                            </tr>
+                            <template v-for="(row, rowIndex) in bench"> 
+                                <tr :key="rowIndex" v-if="textSearchName(row.Name, benchPlayerSearch)">
+                                    <td>{{row.Name}}</td>
+                                    <td>{{row.Salary}}</td>
+                                    <td>{{row.AvgPointsPerGame}}</td>
+                                    <td>
+                                        <p class="buttons">
+                                            <button class="button is-success is-small is-outlined" title="Remove from bench." @click="removeManualBench(row.ID);">
+                                                <span class="icon is-small">
+                                                <i class="fas fa-user-plus fa-lg"></i>
+                                                </span>
+                                            </button>
+                                        </p>
+                                    </td>
+                                </tr>
+                            </template>
                         </table>
                     </div>
                     <div v-else>
@@ -206,7 +223,7 @@
                                 <p class="is-size-3">Team List</p>
                             </div>
                             <div class="level-item">
-                                <input type="text" class="input" placeholder="Search..." v-model="playerSearch">
+                                <input type="text" class="input" placeholder="Search..." v-model="teamPlayerSearch">
                             </div>
                         </div>
                         <div v-else></div>
@@ -243,17 +260,17 @@
                                 <th>Cut Count</th>
                             </thead>
                             <template v-for="(team, teamIndex) of Object.values(teams)" > 
-                            <tr :key="teamIndex" v-if="textSearch(team.players)">
-                                
-                                <td>{{teamIndex + 1}}</td>
-                                <td v-for="(player, playerIndex) of team.players" :key="playerIndex">
-                                    {{player.displayName}}</td>
-                                <td>{{team.salaryCap}}</td>
-                                <td>{{team.averagePoints}}</td>
-                                <td>{{team.differential}}</td>
-                                <td>{{getTeamCutCount(team)}}</td>
-                                
-                            </tr>
+                                <tr :key="teamIndex" v-if="textSearch(team.players)">
+                                    
+                                    <td>{{teamIndex + 1}}</td>
+                                    <td v-for="(player, playerIndex) of team.players" :key="playerIndex">
+                                        {{player.displayName}}</td>
+                                    <td>{{team.salaryCap}}</td>
+                                    <td>{{team.averagePoints}}</td>
+                                    <td>{{team.differential}}</td>
+                                    <td>{{getTeamCutCount(team)}}</td>
+                                    
+                                </tr>
                             </template>
                         </table>
                     </div>
@@ -263,8 +280,40 @@
                 </section>
 
                 <section v-if="tab == 'draft-settings'" id="draft-settings">
+                        <div class="level">
+                            <div class="level-left">
+                                <div class="level-item">
+                                    <h2 class="is-size-3">Required Settings</h2>
+                                </div>
+                            </div>
+
+                            <!-- Right side -->
+                            <div class="level-right">
+                                <div class="level-item">
+                                    <button type="button" class="button is-dark" @click="exportAllData()">Export Data</button>
+                                </div>
+                                <div class="level-item">
+                                    <div class="file has-name is-dark">
+                                        <label class="file-label">
+                                            <input class="file-input" type="file" name="fileinput" id="dataImport"
+                                                @change="importAllData">
+                                            <span class="file-cta">
+                                                <span class="file-icon">
+                                                    <i class="fas fa-upload"></i>
+                                                </span>
+                                                <span class="file-label">
+                                                    Import Previous Data
+                                                </span>
+                                            </span>
+                                            <span class="import-file-name">
+
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     <div style="width: 30%;">
-                        <h2 class="is-size-3">Required Settings</h2>
                         <br>
                         <label>Team Count: <input type="text" id="teamCount" class="input"
                                 v-model="settings.teamCount"></label>
@@ -316,6 +365,7 @@
             style="position: absolute; top: 150px; right: 20px;">
             {{notificationMessage}}
         </div>
+        <a id="downloadAnchorElem" style="display:none"></a>
     </section>
     <script src="./modules/data.js"></script>
     <script src="./modules/table.js"></script>

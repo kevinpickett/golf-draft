@@ -4,6 +4,9 @@ const App = new Vue({
     return {
       players: {},
       playerSearch: '',
+      teamPlayerSearch: '',
+      draftPoolPlayerSearch: '',
+      benchPlayerSearch: '',
       draftPool: {},
       bench: {},
       teams: {},
@@ -23,8 +26,13 @@ const App = new Vue({
         minTeamAveragePoints: 0,
         maxTeamDifferential: 0,
         playerUsageLimit: 0,
-      }
+      },
+      password: '',
+      showScreen: false
     }
+  },
+  created: function() {
+    window.addEventListener('keydown', this.passcode)
   },
   mounted: function() {
     let settings = this.loadFromStorage('draftSettings')
@@ -305,6 +313,13 @@ const App = new Vue({
       }
       return count
     },
+    passcode(e) {
+      this.password += e.key
+      if(this.password.includes('blake')){
+        this.showScreen = true
+        window.removeEventListener('keydown', this.passcode)
+      }
+    },
     async removePlayer(playerID) {
       // Confirm Removal
       let confirmation = confirm('Removing a player will cause the teams the player was on to be rebuilt. Confirm to proceed.')
@@ -365,14 +380,38 @@ const App = new Vue({
       })
     },
     textSearch(players) {
-      if(this.playerSearch == '') {
+      if(this.teamPlayerSearch == '') {
         return true
       } else {
-        let text = this.playerSearch.toLowerCase()
+        let text = this.teamPlayerSearch.toLowerCase()
         let names = Object.values(players).map(player => player.Name.toLowerCase()).toString()
         return names.includes(text)
       }
-      
+    },
+    textSearchName(name, search) {
+       if(search == '') {
+        return true
+      } else {
+        let text = name.toLowerCase()
+        let searchString = search.toLowerCase()
+        let result = text.includes(searchString)
+        return result
+      }
+    },
+    exportAllData() {
+      exportData(this)
+    },
+    async importAllData(event) {
+      await importData(event)
+      let data = this.loadFromStorage('dataImport')
+      this.players = data.players
+      this.draftPool = data.draftPool
+      this.bench = data.bench
+      this.teams = data.teams
+      this.manualBench = data.manualBench
+      this.cuts = data.cuts 
+      this.settings = data.settings
     }
+
   }
 })

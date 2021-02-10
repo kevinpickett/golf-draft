@@ -7,11 +7,6 @@ function Team (teamSize) {
     this.differential = null
 }
 
-// Draft.prototype.buildTeam = function() {
-//     let team = []
-//     return team
-// }
-
 Team.prototype.setComputedValues = function() {
     this.getTeamID()
     this.getSalaryCap()
