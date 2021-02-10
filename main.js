@@ -8,7 +8,7 @@ function createWindow () {
       nodeIntegration: false // changed from default == true
     }
   })
-  win.webContents.openDevTools()
+  //win.webContents.openDevTools()
   win.loadFile('index.html')
 }
 
