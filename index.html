@@ -24,13 +24,13 @@
 
         <section class="section">
             <div class="container">
-
                 <div class="tabs is-boxed">
                     <ul>
                         <li :class="tab == 'import-players' ? 'is-active' : ''"><a @click="setTab('import-players')">Import</a></li>
                         <li :class="tab == 'draft-pool' ? 'is-active' : ''"><a @click="setTab('draft-pool')">Draft Pool</a></li>
                         <li :class="tab == 'bench' ? 'is-active' : ''"><a @click="setTab('bench')">Bench</a></li>
                         <li :class="tab == 'teams' ? 'is-active' : ''"><a @click="setTab('teams')">Teams</a></li>
+                        <li :class="tab == 'database' ? 'is-active' : ''"><a @click="setTab('database')">Database</a></li>
                         <li :class="tab == 'draft-settings' ? 'is-active' : ''"><a @click="setTab('draft-settings')">Settings</a></li>
                     </ul>
                 </div>
@@ -281,7 +281,47 @@
                         <p>Please click the <strong>Draft</strong> button to built the team list.</p>
                     </div>
                 </section>
+                
+                <section v-if="tab == 'database'" id="database">
+                    <div class="level">
+                        <div class="level-left">
+                            <div class="level-item">
+                                <h2 class="is-size-3">Database Entries</h2>
+                            </div>
+                        </div>
 
+                        <!-- Right side -->
+                        <div class="level-right">
+                            <div class="level-item">
+                                <input class="input" type="text" placeholder="Database Entry Name" v-model="dbEntryName">       
+                            </div>
+                            <div class="level-item">
+                                <button type="button" class="button is-dark" @click="saveDBEntry()">Save Current</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <table class="table is-narrow is-fullwidth">
+                        <thead>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Timestamp</th>
+                            <th>Actions</th>
+                        </thead>
+                        <template v-for="(entry, dbKey) of Object.values(database.entries)" > 
+                            <tr :key="dbKey">
+                                <td>{{entry.uuid}}</td>
+                                <td>{{entry.name}}</td>
+                                <td>{{unixTime(entry.timestamp)}}</td>
+                                <td>
+                                    <button type="button" class="button is-success" @click="loadDBEntry(entry.uuid)">Loadout</button>
+                                    <button type="button" class="button is-danger" @click="deleteDBEntry(entry.uuid)">Delete</button>
+                                </td>
+                            </tr>
+                        </template>
+                    </table>
+                </section>
+                
                 <section v-if="tab == 'draft-settings'" id="draft-settings">
                         <div class="level">
                             <div class="level-left">
@@ -293,7 +333,7 @@
                             <!-- Right side -->
                             <div class="level-right">
                                 <div class="level-item">
-                                    <button type="button" class="button is-dark" @click="exportAllData()">Export Data</button>
+                                    <button type="button" class="button is-dark" @click="exportAllData()">Export Team Data</button>
                                 </div>
                                 <div class="level-item">
                                     <div class="file has-name is-dark">
@@ -370,6 +410,7 @@
         </div>
         <a id="downloadAnchorElem" style="display:none"></a>
     </section>
+    <script src="./modules/database.js"></script>
     <script src="./modules/settings.js"></script>
     <script src="./modules/data.js"></script>
     <script src="./modules/table.js"></script>

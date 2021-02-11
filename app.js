@@ -16,6 +16,8 @@ const App = new Vue({
       tab: 'import-players',
       notificationMessage: false,
       notificationType: '',
+      database: new Database(),
+      dbEntryName: '',
       settings: {
         lowerLimit: '',
         upperLimit: '',
@@ -44,6 +46,7 @@ const App = new Vue({
       this.settings.maxTeamDifferential = settings.maxTeamDifferential
       this.settings.playerUsageLimit = settings.playerUsageLimit
     }
+    this.database.load()
     this.loadPlayersFromStorage()
     this.initPlayersCut()
     this.loadDraftPoolFromStorage()
@@ -384,7 +387,11 @@ const App = new Vue({
       }
     },
     exportAllData() {
-      let exportAllData = {
+      let exportObject = this.getExportData()
+      exportData(exportObject)
+    },
+    getExportData() {
+      let exportObject = {
         players: JSON.parse(JSON.stringify(this.players)),
         draftPool: JSON.parse(JSON.stringify(this.draftPool)),
         bench: JSON.parse(JSON.stringify(this.bench)),
@@ -393,12 +400,9 @@ const App = new Vue({
         cuts: JSON.parse(JSON.stringify(this.cuts)),
         settings: JSON.parse(JSON.stringify(this.settings))
       }
-
-      exportData(exportAllData)
+      return exportObject
     },
-    async importAllData(event) {
-      await importData(event)
-      let data = this.loadFromStorage('dataImport')
+    importProgramData(data){
       this.importObjects(data.players, 'players')
       this.importObjects(data.draftPool, 'draftPool')
       this.importObjects(data.bench, 'bench')
@@ -406,6 +410,11 @@ const App = new Vue({
       this.importObjects(data.teams, 'teams')
       this.settings = data.settings
       this.cuts = data.cuts
+    },
+    async importAllData(event) {
+      await importData(event)
+      let data = this.loadFromStorage('dataImport')
+      this.importProgramData(data)
     },
     importObjects(objects, property) {
       let object = {}
@@ -420,7 +429,39 @@ const App = new Vue({
     validateSettings() {
       let settings = new Settings()
       return settings.validate()
-    }
+    },
+    saveDBEntry() {
+      if(this.dbEntryName == '') {
+        this.notificationType = 'failure'
+        this.notificationMessage = 'To save record, datbase name must be set.'
+        setTimeout(() => { this.notificationMessage = false }, 3000);
+        return
+      }
 
+      let record = {
+        uuid: this.database.getUUID(),
+        name: this.dbEntryName,
+        timestamp: Date.now(),
+        data: this.getExportData()
+      }
+      this.database.insert(record)
+      this.dbEntryName = ''
+    },
+    deleteDBEntry(uuid) {
+      let confirmation = confirm('Please confirm you would like to delete Database record.')
+      if(confirmation) {
+        this.database.delete(uuid)
+      }
+    },
+    unixTime(unixTime) {
+      return new Date(unixTime).toLocaleDateString("en-US") + " " + new Date(unixTime).toLocaleTimeString("en-US")
+    },
+    loadDBEntry(uuid) {
+      let data = this.database.select(uuid)
+      if(data && data.data) {
+        this.importProgramData(data.data)
+        this.setTab('import-players')
+      }
+    }
   }
 })
