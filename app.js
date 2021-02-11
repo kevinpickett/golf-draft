@@ -27,8 +27,13 @@ const App = new Vue({
         minTeamAveragePoints: '',
         maxTeamDifferential: '',
         playerUsageLimit: '',
-      }
+      },
+      password: '',
+      showScreen: false
     }
+  },
+  created: function() {
+    window.addEventListener('keydown', this.passcode)
   },
   mounted: function() {
     let settings = new Settings()
@@ -52,6 +57,13 @@ const App = new Vue({
     this.getCountPlayerTimesUsed()
   },
   methods: {
+    passcode(e) {
+      this.password += e.key
+      if(this.password.includes('blake')){
+        this.showScreen = true
+        window.removeEventListener('keydown', this.passcode)
+      }
+    },
     async loadPlayers(event) {
       window.localStorage.removeItem('draftCuts')
       await importCSV(event)
