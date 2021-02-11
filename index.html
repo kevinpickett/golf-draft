@@ -238,8 +238,11 @@
                             </div>
                         </div>
                         <div class="level-right" v-else>
-                            <div class="level-item">
+                            <div v-if="validateSettings()" class="level-item">
                                 <button type="button" class="button is-dark" @click="buildTeams();">Draft</button>
+                            </div>
+                            <div v-else class="level-item">
+                                <p class="is-size-5 has-text-danger">Required Rules Not Set</p>
                             </div>
                         </div>
                     </div>
@@ -361,12 +364,13 @@
 
             </div>
         </section>
-        <div v-if="notificationMessage" class="notification is-primary"
+        <div v-if="notificationMessage" :class="notificationType == 'success' ? 'notification is-primary' : 'notification is-danger'"
             style="position: absolute; top: 150px; right: 20px;">
             {{notificationMessage}}
         </div>
         <a id="downloadAnchorElem" style="display:none"></a>
     </section>
+    <script src="./modules/settings.js"></script>
     <script src="./modules/data.js"></script>
     <script src="./modules/table.js"></script>
     <script src="./modules/team.js"></script>

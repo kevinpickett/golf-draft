@@ -37,7 +37,7 @@ Draft.prototype.buildRandomTeams = function() {
     }
 
     // Now we have our teams, convert the algorithm strings to actual objects
-    console.log('Failure Count: ' + this.failureCount)
+    //console.log('Failure Count: ' + this.failureCount)
 }
 
 Draft.prototype.reBuild = function(teams) {

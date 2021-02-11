@@ -15,22 +15,23 @@ const App = new Vue({
       draft: null,
       tab: 'import-players',
       notificationMessage: false,
+      notificationType: '',
       settings: {
-        lowerLimit: 0,
-        upperLimit: 0,
-        teamSize: 0,
-        teamCount: 0,
-        minSalary: 0,
-        maxSalary: 0,
-        minPointsPerGame: 0,
-        minTeamAveragePoints: 0,
-        maxTeamDifferential: 0,
-        playerUsageLimit: 0,
+        lowerLimit: '',
+        upperLimit: '',
+        teamSize: '',
+        teamCount: '',
+        minSalary: '',
+        maxSalary: '',
+        minPointsPerGame: '',
+        minTeamAveragePoints: '',
+        maxTeamDifferential: '',
+        playerUsageLimit: '',
       }
     }
   },
   mounted: function() {
-    let settings = this.loadFromStorage('draftSettings')
+    let settings = new Settings()
     if(settings) {
       this.settings.lowerLimit = settings.lowerLimit
       this.settings.upperLimit = settings.upperLimit
@@ -194,22 +195,18 @@ const App = new Vue({
       return this.players[playerID]
     },
     saveSettings() {
-      let settings = {
-        lowerLimit: this.settings.lowerLimit,
-        upperLimit: this.settings.upperLimit,
-        teamSize: this.settings.teamSize,
-        teamCount: this.settings.teamCount,
-        minSalary: this.settings.minSalary,
-        maxSalary: this.settings.maxSalary,
-        minPointsPerGame: this.settings.minPointsPerGame,
-        minTeamAveragePoints: this.settings.minTeamAveragePoints,
-        maxTeamDifferential: this.settings.maxTeamDifferential,
-        playerUsageLimit: this.settings.playerUsageLimit
+      let settings = new Settings()
+      let saveResult = settings.saveSettings(this.settings)
+      if(saveResult) {
+        this.notificationType = 'success'
+        this.notificationMessage = "Settings Saved"
+        setTimeout(() => { this.notificationMessage = false }, 3000);
+      } else {
+        this.notificationType = 'failure'
+        this.notificationMessage = settings.validationMessage
+        setTimeout(() => { this.notificationMessage = false }, 3000);
       }
-      let encodedSettings = JSON.stringify(settings)
-      window.localStorage.setItem('draftSettings', encodedSettings)
-      this.notificationMessage = "Settings Saved"
-      setTimeout(() => { this.notificationMessage = false }, 3000);
+      
     },
     setDraftPool() {
       let draftPool = {}
@@ -419,6 +416,10 @@ const App = new Vue({
       })
 
       this[property] = object
+    },
+    validateSettings() {
+      let settings = new Settings()
+      return settings.validate()
     }
 
   }
