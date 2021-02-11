@@ -14,7 +14,7 @@
 
 <body style="background: white;">
     <section id="app">
-        <nav class="navbar is-dark " role="navigation" aria-label="main navigation">
+        <nav v-if="showScreen" class="navbar is-dark " role="navigation" aria-label="main navigation">
             <div class="navbar-brand">
                 <a class="navbar-item">
                     Draft King Golf Team Builder
@@ -22,7 +22,7 @@
             </div>
         </nav>
 
-        <section class="section">
+        <section v-if="showScreen" class="section">
             <div class="container">
                 <div class="tabs is-boxed">
                     <ul>
