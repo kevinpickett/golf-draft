@@ -3,6 +3,18 @@ const App = new Vue({
   data: function(){
     return {
       players: {},
+      displayPlayers: [],
+      playersSort: 'Salary',
+      playersDesc: 'true',
+      displayPool: [],
+      poolSort: 'Salary',
+      poolDesc: 'true',
+      displayBench: [],
+      benchSort: 'Salary',
+      benchDesc: 'true',
+      displayTeams: [],
+      teamSort: 'salaryCap',
+      teamDesc: 'true',
       playerSearch: '',
       teamPlayerSearch: '',
       draftPoolPlayerSearch: '',
@@ -29,8 +41,15 @@ const App = new Vue({
         minTeamAveragePoints: '',
         maxTeamDifferential: '',
         playerUsageLimit: '',
-      }
+      },
+      reportType: '',
+      cutReportData: {},
+      password: '',
+      showScreen: false
     }
+  },
+  created: function() {
+    window.addEventListener('keydown', this.passcode)
   },
   mounted: function() {
     let settings = new Settings()
@@ -55,6 +74,13 @@ const App = new Vue({
     this.getCountPlayerTimesUsed()
   },
   methods: {
+    passcode(e) {
+      this.password += e.key
+      if(this.password.includes('blake')){
+        this.showScreen = true
+        window.removeEventListener('keydown', this.passcode)
+      }
+    },
     async loadPlayers(event) {
       window.localStorage.removeItem('draftCuts')
       await importCSV(event)
@@ -81,6 +107,7 @@ const App = new Vue({
           }
         })
         this.players = playersObject
+        this.displayPlayers = Object.values(this.players)
       }
     },
     loadTeamsFromStorage() {
@@ -91,6 +118,8 @@ const App = new Vue({
           teamsObject[team.id] = team
         })
         this.teams = teamsObject
+        this.getAllTeamCutCount()
+        this.displayTeams = Object.values(this.teams)
       }      
     },
     loadBenchFromStorage() {
@@ -101,6 +130,7 @@ const App = new Vue({
           playersObject[player.ID] = player
         })
         this.bench = playersObject
+        this.displayBench = Object.values(this.bench)
       } 
     },
     loadDraftPoolFromStorage() {
@@ -111,6 +141,7 @@ const App = new Vue({
           playersObject[player.ID] = player
         })
         this.draftPool = playersObject
+        this.displayPool = Object.values(this.draftPool)
       } 
     },
     loadFromStorage(key) {
@@ -137,6 +168,9 @@ const App = new Vue({
       let encodedTeams = JSON.stringify(Object.values(this.draft.teams))
       window.localStorage.setItem('draftTeams', encodedTeams)
       this.teams = this.draft.teams
+      this.displayTeams = Object.values(this.teams)
+      this.setPlayerSort(this.playerSort, false)
+      this.setTeamSort(this.teamSort, false)
       this.getCountPlayerTimesUsed()
     },
     setTab(tab) {
@@ -146,6 +180,7 @@ const App = new Vue({
       let confirmRemoveTeams = confirm("Please confirm that you would like to remove the current set of teams.");
       if(confirmRemoveTeams) {
         this.teams = {}
+        this.displayTeams = []
         window.localStorage.removeItem('draftTeams')
         // Reset Counters to Zero
         for(const [key, player] of Object.entries(this.players)) {
@@ -159,8 +194,11 @@ const App = new Vue({
       Vue.set(this.manualBench, player.ID, player)
       Vue.delete(this.draftPool, player.ID)
       Vue.set(this.bench, player.ID, player)
+      this.displayBench.push(player)
+      Vue.delete(this.displayPool, this.displayPool.findIndex(item => item.ID == playerID))
       this.saveDraftPool(this.draftPool)
       this.saveBench(this.bench)
+      this.setBenchSort(this.benchSort, false)
     },
     removeManualBench(playerID) {
       let player = this.getPlayer(playerID)
@@ -168,14 +206,18 @@ const App = new Vue({
       Vue.delete(this.manualBench, player.ID)
       Vue.delete(this.bench, player.ID)
       Vue.set(this.draftPool, player.ID, player)
+      this.displayPool.push(player)
+      Vue.delete(this.displayBench, this.displayBench.findIndex(item => item.ID == playerID))
       this.saveDraftPool(this.draftPool)
       this.saveBench(this.bench)
+      this.setPoolSort(this.poolSort, false)
     },
     setMadeCut(playerID) {
       this.cuts.push(playerID)
       let encodedPlayers = JSON.stringify(Object.values(this.cuts))
       window.localStorage.setItem('draftCuts', encodedPlayers)
       this.$forceUpdate()
+      this.getAllTeamCutCount()
     },
     setMissedCut(playerID) {
       let index = this.cuts.indexOf(playerID)
@@ -185,6 +227,7 @@ const App = new Vue({
       let encodedPlayers = JSON.stringify(Object.values(this.cuts))
       window.localStorage.setItem('draftCuts', encodedPlayers)
       this.$forceUpdate()
+      this.getAllTeamCutCount()
     },
     saveDraftPool(pool) {
       let encodedPlayers = JSON.stringify(Object.values(pool))
@@ -308,6 +351,11 @@ const App = new Vue({
       }
       return count
     },
+    getAllTeamCutCount() {
+      for(const [key, team] of Object.entries(this.teams)){
+        this.teams[key].teamCutCount = this.getTeamCutCount(team)
+      }
+    },
     async removePlayer(playerID) {
       // Confirm Removal
       let confirmation = confirm('Removing a player will cause the teams the player was on to be rebuilt. Confirm to proceed.')
@@ -335,6 +383,7 @@ const App = new Vue({
         if(removedTeamCount > 0) {
           this.buildTeams(true)
           this.notificationMessage = "Edited Teams: " + editedTeams.toString()
+          this.getAllTeamCutCount()
           setTimeout(() => { this.notificationMessage = false }, 5000); 46,54,58,63
         }
       }      
@@ -408,6 +457,10 @@ const App = new Vue({
       this.importObjects(data.bench, 'bench')
       this.importObjects(data.manualBench, 'manualBench')
       this.importObjects(data.teams, 'teams')
+      this.setPlayerSort(this.playerSort, false)
+      this.setPoolSort(this.poolSort, false)
+      this.setBenchSort(this.benchSort, false)
+      this.setTeamSort(this.teamSort, false)
       this.settings = data.settings
       this.cuts = data.cuts
     },
@@ -462,6 +515,109 @@ const App = new Vue({
         this.importProgramData(data.data)
         this.setTab('import-players')
       }
+    },
+    textSort(data, property, desc = 'true') {
+      let propA = desc ? 1 : -1
+      let propB = desc ? -1 : 1
+      if(desc === 'true') {
+        data.sort((a, b) => (a[property] > b[property]) ? propA : propB)
+      } else {
+        data.sort((a, b) => (a[property] > b[property]) ? propB : propA)
+      }
+      return data
+    },
+    numericSort(data, property, desc = 'true') {
+      if(desc === 'true') {
+        data.sort((a, b) => b[property] - a[property])
+      } else {
+        data.sort((b, a) => b[property] - a[property])
+      }
+      
+      return data
+    },
+    sortPlayers() {
+      let players = Object.values(this.players)
+      if(this.playersSort == 'Name') {
+        return this.textSort(players, this.playersSort, this.playersDesc)
+      } else {
+        return this.numericSort(players, this.playersSort, this.playersDesc)
+      }
+    },
+    setPlayerSort(property, modifyDesc = true) {
+      if(modifyDesc) {
+        if(property == this.playersSort) {
+          this.playersDesc =  this.playersDesc == 'false' ? 'true' : 'false'
+        } else {
+          this.playersDesc = 'true'
+        }
+      }
+      
+      this.playersSort = property
+      this.displayPlayers = []
+      let players = Object.values(this.players)
+      if(this.playersSort == 'Name') {
+        this.displayPlayers = this.textSort(players, this.playersSort, this.playersDesc)
+      } else {
+        this.displayPlayers = this.numericSort(players, this.playersSort, this.playersDesc)
+      }
+    },
+    setPoolSort(property, modifyDesc = true) {
+      if(modifyDesc) {
+        if(property == this.poolSort) {
+          this.poolDesc = this.poolDesc == 'false' ? 'true' : 'false'
+        } else {
+          this.poolDesc = 'true'
+        }
+      }
+      this.poolSort = property
+      this.displayPool = []
+      let pool = Object.values(this.draftPool)
+      if(this.poolSort == 'Name') {
+        this.displayPool = this.textSort(pool, this.poolSort, this.poolDesc)
+      } else {
+        this.displayPool = this.numericSort(pool, this.poolSort, this.poolDesc)
+      }
+    },
+    setBenchSort(property, modifyDesc = true) {
+      if(modifyDesc) {
+        if(property == this.benchSort) {
+          this.benchDesc = this.benchDesc == 'false' ? 'true' : 'false'
+        } else {
+          this.benchDesc = 'true'
+        }
+      }
+      this.benchSort = property
+      this.displayBench = []
+      let bench = Object.values(this.bench)
+      if(this.benchSort == 'Name') {
+        this.displayBench = this.textSort(bench, this.benchSort, this.benchDesc)
+      } else {
+        this.displayBench = this.numericSort(bench, this.benchSort, this.benchDesc)
+      }
+    },
+    setTeamSort(property, modifyDesc = true) {
+      if(modifyDesc) {
+        if(property == this.teamSort) {
+          this.teamDesc = this.teamDesc == 'false' ? 'true' : 'false'
+        } else {
+          this.teamDesc = 'true'
+        }
+      }
+      this.teamSort = property
+      this.displayTeams = []
+      let team = Object.values(this.teams)
+      this.displayTeams = this.numericSort(team, this.teamSort, this.teamDesc)
+    },
+    runCutReport() {
+      this.reportType = 'cutReport'
+      let cutReportData = {}
+      Object.values(this.teams).forEach(team => {
+        if(!cutReportData.hasOwnProperty(team.teamCutCount)) {
+          cutReportData[team.teamCutCount] = 0
+        }
+        cutReportData[team.teamCutCount] += 1
+      }) 
+      this.cutReportData = cutReportData
     }
-  }
+  },
 })

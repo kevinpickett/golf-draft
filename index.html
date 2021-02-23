@@ -14,7 +14,7 @@
 
 <body style="background: white;">
     <section id="app">
-        <nav class="navbar is-dark " role="navigation" aria-label="main navigation">
+        <nav v-if="showScreen" class="navbar is-dark " role="navigation" aria-label="main navigation">
             <div class="navbar-brand">
                 <a class="navbar-item">
                     Draft King Golf Team Builder
@@ -22,7 +22,7 @@
             </div>
         </nav>
 
-        <section class="section">
+        <section v-if="showScreen" class="section">
             <div class="container">
                 <div class="tabs is-boxed">
                     <ul>
@@ -30,6 +30,7 @@
                         <li :class="tab == 'draft-pool' ? 'is-active' : ''"><a @click="setTab('draft-pool')">Draft Pool</a></li>
                         <li :class="tab == 'bench' ? 'is-active' : ''"><a @click="setTab('bench')">Bench</a></li>
                         <li :class="tab == 'teams' ? 'is-active' : ''"><a @click="setTab('teams')">Teams</a></li>
+                        <li :class="tab == 'report' ? 'is-active' : ''"><a @click="setTab('report')">Report</a></li>
                         <li :class="tab == 'database' ? 'is-active' : ''"><a @click="setTab('database')">Database</a></li>
                         <li :class="tab == 'draft-settings' ? 'is-active' : ''"><a @click="setTab('draft-settings')">Settings</a></li>
                     </ul>
@@ -77,20 +78,30 @@
                     <div v-if="players && Object.keys(players).length > 0" class="table-container">
                         <table class="table is-narrow is-fullwidth is-bordered is-striped" id="playerList">
                             <thead>
-                                <th>Index</th>
-                                <th>Name</th>
-                                <th>Salary</th>
-                                <th>Points Per Game</th>
-                                <th>Team Count</th>
+                                <th><span class="icon-text" @click="setPlayerSort('Name')"> <span>Name</span>
+                                    <span v-if="playersSort == 'Name' && playersDesc == 'true'" class="icon" :key="playersDesc"> <i class="fas fa-caret-down"></i></span>
+                                    <span v-else-if="playersSort == 'Name' && playersDesc == 'false'" class="icon" :key="playersDesc"> <i class="fas fa-caret-up" ></i></span>
+                                </span></th>
+                                <th><span class="icon-text" @click="setPlayerSort('Salary')"> <span>Salary</span>
+                                    <span v-if="playersSort == 'Salary' && playersDesc == 'true'" class="icon" :key="playersDesc"> <i class="fas fa-caret-down"></i></span>
+                                    <span v-else-if="playersSort == 'Salary' && playersDesc == 'false'" class="icon" :key="playersDesc"> <i class="fas fa-caret-up" ></i></span>
+                                </span></th>
+                                <th><span class="icon-text" @click="setPlayerSort('AvgPointsPerGame')"> <span>PointsPerGame</span>
+                                    <span v-if="playersSort == 'AvgPointsPerGame' && playersDesc == 'true'" class="icon" :key="playersDesc"> <i class="fas fa-caret-down"></i></span>
+                                    <span v-else-if="playersSort == 'AvgPointsPerGame' && playersDesc == 'false'" class="icon" :key="playersDesc"> <i class="fas fa-caret-up" ></i></span>
+                                </span></th>
+                                <th><span class="icon-text" @click="setPlayerSort('teamCount')"> <span>Team Count</span>
+                                    <span v-if="playersSort == 'teamCount' && playersDesc == 'true'" class="icon" :key="playersDesc"> <i class="fas fa-caret-down"></i></span>
+                                    <span v-else-if="playersSort == 'teamCount' && playersDesc == 'false'" class="icon" :key="playersDesc"> <i class="fas fa-caret-up" ></i></span>
+                                </span></th>
                                 <th>Actions</th>
                             </thead>
-                            <template v-for="(row, rowIndex) in players">
+                            <template v-for="(row, rowIndex) in displayPlayers">
                                 <tr v-if="textSearchName(row.Name, playerSearch)"  :key="rowIndex">
-                                    <td>{{rowIndex}}</td>
                                     <td>{{row.Name}}</td>
                                     <td>{{row.Salary}}</td>
                                     <td>{{row.AvgPointsPerGame}}</td>
-                                    <td>{{row.teamCount ? row.teamCount : 0}}</td>
+                                    <td>{{row.teamCount ? row.teamCount : 0}} </td>
                                     <td>
                                         <p class="buttons">
                                             <button v-if="getCutStatus(row.ID)" class="button is-success is-small is-outlined" title="Click will mark for missed cut." @click="setMissedCut(row.ID)">
@@ -151,12 +162,21 @@
                     <div v-if="draftPool && Object.keys(draftPool).length > 0" class="table-container">
                         <table class="table is-narrow is-fullwidth is-bordered is-striped" id="draftPool">
                             <thead>
-                                <th>Name</th>
-                                <th>Salary</th>
-                                <th>Points Per Game</th>
+                                <th><span class="icon-text" @click="setPoolSort('Name')"> <span>Name</span>
+                                    <span v-if="poolSort == 'Name' && poolDesc == 'true'" class="icon" :key="poolDesc"> <i class="fas fa-caret-down"></i></span>
+                                    <span v-else-if="poolSort == 'Name' && poolDesc == 'false'" class="icon" :key="poolDesc"> <i class="fas fa-caret-up" ></i></span>
+                                </span></th>
+                                <th><span class="icon-text" @click="setPoolSort('Salary')"> <span>Salary</span>
+                                    <span v-if="poolSort == 'Salary' && poolDesc == 'true'" class="icon" :key="poolDesc"> <i class="fas fa-caret-down"></i></span>
+                                    <span v-else-if="poolSort == 'Salary' && poolDesc == 'false'" class="icon" :key="poolDesc"> <i class="fas fa-caret-up" ></i></span>
+                                </span></th>
+                                <th><span class="icon-text" @click="setPoolSort('AvgPointsPerGame')"> <span>PointsPerGame</span>
+                                    <span v-if="poolSort == 'AvgPointsPerGame' && poolDesc == 'true'" class="icon" :key="poolDesc"> <i class="fas fa-caret-down"></i></span>
+                                    <span v-else-if="poolSort == 'AvgPointsPerGame' && poolDesc == 'false'" class="icon" :key="poolDesc"> <i class="fas fa-caret-up" ></i></span>
+                                </span></th>
                                 <th>Actions</th>
                             </thead>
-                            <template v-for="(row, rowIndex) in draftPool">
+                            <template v-for="(row, rowIndex) in displayPool">
                                 <tr v-if="textSearchName(row.Name, draftPoolPlayerSearch)" :key="rowIndex">
                                     <td>{{row.Name}}</td>
                                     <td>{{row.Salary}}</td>
@@ -188,12 +208,21 @@
                     <div v-if="bench && Object.keys(bench).length > 0" class="table-container">
                         <table class="table is-narrow is-fullwidth is-bordered is-striped" id="benchTable">
                             <thead>
-                                <th>Name</th>
-                                <th>Salary</th>
-                                <th>Points Per Game</th>
+                                <th><span class="icon-text" @click="setBenchSort('Name')"> <span>Name</span>
+                                    <span v-if="benchSort == 'Name' && benchDesc == 'true'" class="icon" :key="benchDesc"> <i class="fas fa-caret-down"></i></span>
+                                    <span v-else-if="benchSort == 'Name' && benchDesc == 'false'" class="icon" :key="benchDesc"> <i class="fas fa-caret-up" ></i></span>
+                                </span></th>
+                                <th><span class="icon-text" @click="setBenchSort('Salary')"> <span>Salary</span>
+                                    <span v-if="benchSort == 'Salary' && benchDesc == 'true'" class="icon" :key="benchDesc"> <i class="fas fa-caret-down"></i></span>
+                                    <span v-else-if="benchSort == 'Salary' && benchDesc == 'false'" class="icon" :key="benchDesc"> <i class="fas fa-caret-up" ></i></span>
+                                </span></th>
+                                <th><span class="icon-text" @click="setBenchSort('AvgPointsPerGame')"> <span>PointsPerGame</span>
+                                    <span v-if="benchSort == 'AvgPointsPerGame' && benchDesc == 'true'" class="icon" :key="benchDesc"> <i class="fas fa-caret-down"></i></span>
+                                    <span v-else-if="benchSort == 'AvgPointsPerGame' && benchDesc == 'false'" class="icon" :key="benchDesc"> <i class="fas fa-caret-up" ></i></span>
+                                </span></th>
                                 <th>Actions</th>
                             </thead>
-                            <template v-for="(row, rowIndex) in bench"> 
+                            <template v-for="(row, rowIndex) in displayBench"> 
                                 <tr :key="rowIndex" v-if="textSearchName(row.Name, benchPlayerSearch)">
                                     <td>{{row.Name}}</td>
                                     <td>{{row.Salary}}</td>
@@ -250,28 +279,38 @@
                     <div class="table-container" id="teamList" v-if="teams && Object.keys(teams).length > 0">
                         <table class="table is-narrow is-fullwidth">
                             <thead>
-                                <th>Team</th>
                                 <th>Player 1</th>
                                 <th>Player 2</th>
                                 <th>Player 3</th>
                                 <th>Player 4</th>
                                 <th>Player 5</th>
                                 <th>Player 6</th>
-                                <th>Salary</th>
-                                <th>Average Points</th>
-                                <th>Max/Min Diff</th>
-                                <th>Cut Count</th>
+                                <th><span class="icon-text" @click="setTeamSort('salaryCap')"> <span>Salary Cap</span>
+                                    <span v-if="teamSort == 'salaryCap' && teamDesc == 'true'" class="icon" :key="teamDesc"> <i class="fas fa-caret-down"></i></span>
+                                    <span v-else-if="teamSort == 'salaryCap' && teamDesc == 'false'" class="icon" :key="teamDesc"> <i class="fas fa-caret-up" ></i></span>
+                                </span></th>
+                                <th><span class="icon-text" @click="setTeamSort('averagePoints')"> <span>Average Points</span>
+                                    <span v-if="teamSort == 'averagePoints' && teamDesc == 'true'" class="icon" :key="teamDesc"> <i class="fas fa-caret-down"></i></span>
+                                    <span v-else-if="teamSort == 'averagePoints' && teamDesc == 'false'" class="icon" :key="teamDesc"> <i class="fas fa-caret-up" ></i></span>
+                                </span></th>
+                                <th><span class="icon-text" @click="setTeamSort('differential')"> <span>Max/Minn Diff</span>
+                                    <span v-if="teamSort == 'differential' && teamDesc == 'true'" class="icon" :key="teamDesc"> <i class="fas fa-caret-down"></i></span>
+                                    <span v-else-if="teamSort == 'differential' && teamDesc == 'false'" class="icon" :key="teamDesc"> <i class="fas fa-caret-up" ></i></span>
+                                </span></th>
+                                <th><span class="icon-text" @click="setTeamSort('teamCutCount')"> <span>Cut Count</span>
+                                    <span v-if="teamSort == 'teamCutCount' && teamDesc == 'true'" class="icon" :key="teamDesc"> <i class="fas fa-caret-down"></i></span>
+                                    <span v-else-if="teamSort == 'teamCutCount' && teamDesc == 'false'" class="icon" :key="teamDesc"> <i class="fas fa-caret-up" ></i></span>
+                                </span></th>
                             </thead>
-                            <template v-for="(team, teamIndex) of Object.values(teams)" > 
+                            <template v-for="(team, teamIndex) of displayTeams" > 
                                 <tr :key="teamIndex" v-if="textSearch(team.players)">
                                     
-                                    <td>{{teamIndex + 1}}</td>
                                     <td v-for="(player, playerIndex) of team.players" :key="playerIndex">
                                         {{player.displayName}}</td>
                                     <td>{{team.salaryCap}}</td>
                                     <td>{{team.averagePoints}}</td>
                                     <td>{{team.differential}}</td>
-                                    <td>{{getTeamCutCount(team)}}</td>
+                                    <td>{{team.teamCutCount}}</td>
                                     
                                 </tr>
                             </template>
@@ -282,6 +321,35 @@
                     </div>
                 </section>
                 
+                <section v-if="tab == 'report'" id="report">
+                    <div class="level">
+                        <div class="level-left">
+                            <div class="level-item">
+                                <h2 class="is-size-3">Reports</h2>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="level">
+                        <div class="level-left">
+                            <div class="level-item">
+                                <button type="button" class="button is-dark" @click="runCutReport();">Run Cut Report</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div v-if="reportType == 'cutReport' && Object.values(cutReportData).length > 0">
+                        <h2 class="is-size-4">Cut Report Results</h2>
+                        <table class="table">
+                            <thead><th>Players Made Cut</th><th>Team Count</th></thead>
+                            <tr v-for="(teamCount, madeCut) in cutReportData">
+                                <td>{{madeCut}}</td><td>{{teamCount}}</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                </section>
+
                 <section v-if="tab == 'database'" id="database">
                     <div class="level">
                         <div class="level-left">
