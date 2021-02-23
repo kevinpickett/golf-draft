@@ -20,6 +20,13 @@
                     Draft King Golf Team Builder
                 </a>
             </div>
+
+            <div class="navbar-end" v-if="dbEntryName">
+                <div class="navbar-item">
+                    Database Entry: {{dbEntryName}}
+                </div>
+            </div>
+
         </nav>
 
         <section v-if="showScreen" class="section">

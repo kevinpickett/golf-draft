@@ -511,7 +511,11 @@ const App = new Vue({
     },
     loadDBEntry(uuid) {
       let data = this.database.select(uuid)
+      console.log(data)
       if(data && data.data) {
+        if(data.name) {
+          this.dbEntryName = data.name
+        }
         this.importProgramData(data.data)
         this.setTab('import-players')
       }
