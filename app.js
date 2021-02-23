@@ -72,6 +72,10 @@ const App = new Vue({
     this.loadBenchFromStorage()
     this.loadTeamsFromStorage()
     this.getCountPlayerTimesUsed()
+    this.setPlayerSort(this.playerSort, false)
+    this.setPoolSort(this.poolSort, false)
+    this.setBenchSort(this.benchSort, false)
+    this.setTeamSort(this.teamSort, false)
   },
   methods: {
     passcode(e) {
@@ -170,8 +174,10 @@ const App = new Vue({
       this.teams = this.draft.teams
       this.displayTeams = Object.values(this.teams)
       this.setPlayerSort(this.playerSort, false)
+      this.getAllTeamCutCount()
       this.setTeamSort(this.teamSort, false)
       this.getCountPlayerTimesUsed()
+      
     },
     setTab(tab) {
       this.tab = tab
@@ -511,7 +517,6 @@ const App = new Vue({
     },
     loadDBEntry(uuid) {
       let data = this.database.select(uuid)
-      console.log(data)
       if(data && data.data) {
         if(data.name) {
           this.dbEntryName = data.name
