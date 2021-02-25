@@ -9,6 +9,8 @@ function Settings () {
     this.minTeamAveragePoints = ''
     this.maxTeamDifferential = ''
     this.playerUsageLimit = ''
+    this.playerUsageMin = ''
+    this.failureLimit = ''
     this.loadSettings()
     
     this.requiredSettings = [
@@ -16,6 +18,7 @@ function Settings () {
         'upperLimit',
         'teamSize',
         'teamCount',
+        'failureLimit',
     ]
 
     this.intRules = [
@@ -26,7 +29,9 @@ function Settings () {
         'minSalary',
         'maxSalary',
         'maxTeamDifferential',
-        'playerUsageLimit'
+        'playerUsageLimit',
+        'playerUsageMin',
+        'failureLimit',
     ]
 
     this.saveAbleProps = [
@@ -38,8 +43,10 @@ function Settings () {
         'maxSalary',
         'maxTeamDifferential',
         'playerUsageLimit',
+        'playerUsageMin',
         'minPointsPerGame',
-        'minTeamAveragePoints'
+        'minTeamAveragePoints',
+        'failureLimit'
     ]
 
     this.floatRules = [
@@ -164,6 +171,8 @@ Settings.prototype.mapSettings = function(settings = {}) {
     this.minTeamAveragePoints = settings.minTeamAveragePoints && !isNaN(parseFloat(settings.minTeamAveragePoints)) ? parseFloat(settings.minTeamAveragePoints) : ''
     this.maxTeamDifferential = settings.maxTeamDifferential && !isNaN(parseInt(settings.maxTeamDifferential)) ? parseInt(settings.maxTeamDifferential) : ''
     this.playerUsageLimit = settings.playerUsageLimit && !isNaN(parseInt(settings.playerUsageLimit)) ? parseInt(settings.playerUsageLimit) : ''
+    this.playerUsageMin = settings.playerUsageMin && !isNaN(parseInt(settings.playerUsageMin)) ? parseInt(settings.playerUsageMin) : ''
+    this.failureLimit = settings.failureLimit && !isNaN(parseInt(settings.failureLimit)) ? parseInt(settings.failureLimit) : ''
 }
 
 Settings.prototype.storeSettings = function() {

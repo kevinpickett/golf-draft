@@ -281,8 +281,11 @@
                             </div>
                         </div>
                         <div class="level-right" v-else>
+                            <div v-if="validateSettings() && settings.playerUsageMin && settings.playerUsageMin > 0" class="level-item">
+                                <button type="button" class="button is-dark" @click="forceUsageBuildTeams">Force Draft</button>
+                            </div>
                             <div v-if="validateSettings()" class="level-item">
-                                <button type="button" class="button is-dark" @click="buildTeams();">Draft</button>
+                                <button type="button" class="button is-dark" @click="buildTeams();">Random Draft</button>
                             </div>
                             <div v-else class="level-item">
                                 <p class="is-size-5 has-text-danger">Required Rules Not Set</p>
@@ -320,7 +323,8 @@
                                 <tr :key="teamIndex" v-if="textSearch(team.players)">
                                     
                                     <td v-for="(player, playerIndex) of team.players" :key="playerIndex">
-                                        {{player.displayName}}</td>
+                                        <span>{{player.displayName}}</span>
+                                    </td>
                                     <td>{{team.salaryCap}}</td>
                                     <td>{{team.averagePoints}}</td>
                                     <td>{{team.differential}}</td>
@@ -452,6 +456,9 @@
                         <label>Cap Bottom Limit: <input type="text" id="bottomLimit" class="input"
                                 v-model="settings.lowerLimit"></label>
                         <br><br>
+                        <label>Failure Limit (Recommend 1 million): <input type="text" id="failureLimit" class="input"
+                                v-model="settings.failureLimit"></label>
+                        <br><br>
                         <h2 class="is-size-3">Optional Settings</h2>
                         <br>
                         <h2 class="is-size-4">Player Settings <span class="is-size-6">(Manual Buttons)</span></h2>
@@ -477,6 +484,11 @@
 
                         <label>Player Usage Limit: <input type="text" id="playerUsageLimit" class="input"
                             v-model="settings.playerUsageLimit"></label>
+                        <br><br>
+
+                        <label>Player Usage Minimum (Keep 3 and Under): 
+                            <input type="text" id="playerUsageMin" class="input" v-model="settings.playerUsageMin">
+                        </label>
                         <br><br>
 
 

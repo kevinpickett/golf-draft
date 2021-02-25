@@ -1,4 +1,4 @@
-function Draft (playerList, lowerLimit, upperLimit, teamSize, teamCount, minAveragePoints = 0, maxDifferential = 0, playerUsageLimit = 0) {
+function Draft (playerList, lowerLimit, upperLimit, teamSize, teamCount, minAveragePoints = 0, maxDifferential = 0, playerUsageLimit = 0, playerUsageMin = 0, failureLimit = 0) {
     this.playerList = playerList
     let playerIDs = Object.keys(playerList)
     this.playerIDs = playerIDs
@@ -12,6 +12,8 @@ function Draft (playerList, lowerLimit, upperLimit, teamSize, teamCount, minAver
     this.teamIDs = []
     this.failureCount = 0
     this.playerUsageLimit = playerUsageLimit
+    this.playerUsageMin = playerUsageMin
+    this.failureLimit = failureLimit
     this.initUsageCount()
 }
 
@@ -19,6 +21,7 @@ Draft.prototype.buildRandomTeams = function() {
     let team;
     this.teams = []
     this.teamIDs = []
+    let failureCount = 0
     while(this.teamIDs.length < this.teamCount) {
         team = this.buildTeam()
         if(this.isNewTeam(team.id)) {
@@ -34,10 +37,12 @@ Draft.prototype.buildRandomTeams = function() {
             this.failureCount += 1
             Vue.set(this, 'failureCount', this.failureCount)
         }
+        if(failureCount == this.failureLimit) {
+            throw new Error("Timed out building teams. Try again or try lower settings.");
+        } else {
+            failureCount++
+        }
     }
-
-    // Now we have our teams, convert the algorithm strings to actual objects
-    //console.log('Failure Count: ' + this.failureCount)
 }
 
 Draft.prototype.reBuild = function(teams) {
@@ -52,6 +57,7 @@ Draft.prototype.reBuild = function(teams) {
             this.increaseTeamPlayersUsageLimit(team.players)
         } else {
             let teamFound = false
+            let failureCount = 0
             while(!teamFound) {
                 team = this.buildTeam(JSON.parse(JSON.stringify(oldTeam.players)))
                 if(this.hasDraftRequirements(team)) {
@@ -60,9 +66,58 @@ Draft.prototype.reBuild = function(teams) {
                     this.increaseTeamPlayersUsageLimit(team.players)
                     teamFound = true
                 }
+                if(failureCount == this.failureLimit) {
+                    throw new Error("Timed out building teams. Try again or try lower settings.");
+                } else {
+                    failureCount++
+                }
             }
         }
     }
+}
+
+Draft.prototype.forceUsage = function() {
+    this.teams = []
+    this.teamIDs = []
+    let teams = []
+    let teamCount = 0
+    while(teamCount < this.teamCount) {
+        let team = new Team(this.teamSize)
+        teams.push(team)
+        teamCount++
+    }
+
+    let usageCount = 0
+    while(usageCount < this.playerUsageMin) {
+        Object.values(this.playerList).forEach(player => {
+            let teamFound = false
+            let team
+            let teamID
+            let teamSize
+            let failureCount = 0
+            while(!teamFound) {
+                teamID = this.getRandomTeamInt()
+                team = teams[teamID] 
+                teamSize = Object.values(team.players).length
+                if(teamSize < this.playerUsageMin + 1 && teamSize < this.teamSize) {
+                    teamFound = true
+                }
+                if(failureCount == this.failureLimit) {
+                    throw new Error("Timed out building teams. Try again or try lower settings.");
+                } else {
+                    failureCount++
+                }
+            }
+            teams[teamID].players[player.ID] = player
+        })
+        usageCount++
+    }
+    teamsObject = {}
+    teams.forEach((team, index) => {
+        teamsObject[index] = team
+    })
+
+    this.reBuild(teamsObject)
 }
 
 Draft.prototype.buildTeam = function(partialTeam = {}) {
@@ -137,6 +192,13 @@ Draft.prototype.findUnusedPlayer = function(team) {
 Draft.prototype.getRandomValidInt = function() {
     let min = Math.ceil(0);
     let max = Math.floor(this.playerIDs.length);
+    let randomInt = Math.floor(Math.random() * (max - min) + min); //The maximum is exclusive and the minimum is inclusive
+    return randomInt
+}
+
+Draft.prototype.getRandomTeamInt = function() {
+    let min = Math.ceil(0);
+    let max = Math.floor(this.teamCount);
     let randomInt = Math.floor(Math.random() * (max - min) + min); //The maximum is exclusive and the minimum is inclusive
     return randomInt
 }

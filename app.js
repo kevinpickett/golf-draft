@@ -41,6 +41,8 @@ const App = new Vue({
         minTeamAveragePoints: '',
         maxTeamDifferential: '',
         playerUsageLimit: '',
+        playerUsageMin: '',
+        failureLimit: ''
       },
       reportType: '',
       cutReportData: {},
@@ -64,6 +66,8 @@ const App = new Vue({
       this.settings.minTeamAveragePoints = settings.minTeamAveragePoints
       this.settings.maxTeamDifferential = settings.maxTeamDifferential
       this.settings.playerUsageLimit = settings.playerUsageLimit
+      this.settings.playerUsageMin = settings.playerUsageMin
+      this.settings.failureLimit = settings.failureLimit
     }
     this.database.load()
     this.loadPlayersFromStorage()
@@ -162,22 +166,58 @@ const App = new Vue({
         this.settings.minTeamAveragePoints,
         this.settings.maxTeamDifferential,
         this.settings.playerUsageLimit,
+        this.settings.playerUsageMin,
+        this.settings.failureLimit
       )
-      if(isRebuild) {
-        this.draft.reBuild(this.teams)
-      } else {
-        this.draft.buildRandomTeams()
+      try {
+        if(isRebuild) {
+          this.draft.reBuild(this.teams)
+        } else {
+          this.draft.buildRandomTeams()
+        }
+        
+        let encodedTeams = JSON.stringify(Object.values(this.draft.teams))
+        window.localStorage.setItem('draftTeams', encodedTeams)
+        this.teams = this.draft.teams
+        this.displayTeams = Object.values(this.teams)
+        this.setPlayerSort(this.playerSort, false)
+        this.getAllTeamCutCount()
+        this.setTeamSort(this.teamSort, false)
+        this.getCountPlayerTimesUsed()
+      } catch (error) {
+        this.notificationType = 'failure'
+        this.notificationMessage = error
+        setTimeout(() => { this.notificationMessage = false }, 3000);
       }
-      
-      let encodedTeams = JSON.stringify(Object.values(this.draft.teams))
-      window.localStorage.setItem('draftTeams', encodedTeams)
-      this.teams = this.draft.teams
-      this.displayTeams = Object.values(this.teams)
-      this.setPlayerSort(this.playerSort, false)
-      this.getAllTeamCutCount()
-      this.setTeamSort(this.teamSort, false)
-      this.getCountPlayerTimesUsed()
-      
+    },
+    forceUsageBuildTeams() {
+      this.draft = new Draft(this.draftPool, 
+        this.settings.lowerLimit, 
+        this.settings.upperLimit, 
+        this.settings.teamSize, 
+        this.settings.teamCount,
+        this.settings.minTeamAveragePoints,
+        this.settings.maxTeamDifferential,
+        this.settings.playerUsageLimit,
+        this.settings.playerUsageMin,
+        this.settings.failureLimit
+      )
+
+      try {
+        this.draft.forceUsage()
+        let encodedTeams = JSON.stringify(Object.values(this.draft.teams))
+        window.localStorage.setItem('draftTeams', encodedTeams)
+        this.teams = this.draft.teams
+        this.displayTeams = Object.values(this.teams)
+        this.setPlayerSort(this.playerSort, false)
+        this.getAllTeamCutCount()
+        this.setTeamSort(this.teamSort, false)
+        this.getCountPlayerTimesUsed()
+      } catch (error) {
+        this.notificationType = 'failure'
+        this.notificationMessage = error
+        setTimeout(() => { this.notificationMessage = false }, 3000);
+      }
     },
     setTab(tab) {
       this.tab = tab
