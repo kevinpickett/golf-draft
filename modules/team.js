@@ -5,6 +5,7 @@ function Team (teamSize) {
     this.salaryCap = null
     this.averagePoints = null
     this.differential = null
+    this.points = 0
 }
 
 Team.prototype.setComputedValues = function() {
@@ -13,6 +14,7 @@ Team.prototype.setComputedValues = function() {
     this.getAveragePoints()
     this.getPlayerDisplayNames()
     this.getDifferential()
+    this.getTotalPoints()
 }
 
 Team.prototype.getTeamID = function() {
@@ -43,6 +45,14 @@ Team.prototype.getAveragePoints = function() {
     }
     let average = sum / Object.keys(this.players).length
     this.averagePoints = average.toFixed(2)
+}
+
+Team.prototype.getTotalPoints = function() {
+    let sum = 0
+    for(const [key, player] of Object.entries(this.players)) {
+        sum += parseFloat(player.points)
+    }
+    this.points = sum
 }
 
 Team.prototype.getPlayerDisplayNames = function() {

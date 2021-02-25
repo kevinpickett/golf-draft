@@ -54,6 +54,56 @@ Vue.component('player-replace', {
             </div>`
 })
 
+Vue.component('player-points', {
+  props: ['player'],
+  data: function() {
+    return {
+      edit: false,
+      playerID: this.player.ID,
+      points: this.player.points ? this.player.points : 0
+    }
+  },
+  methods: {
+    updatePlayerPoints() {
+      let points = parseFloat(this.points)
+      if(points != '' && points != 'undefined' && !isNaN(points) && (typeof points == 'float' || typeof points == 'int' || typeof points == 'number')) {
+        let emitData = {
+          points: this.points,
+          playerID: this.playerID
+        }
+        this.$emit('update-points', emitData)
+        this.edit = false
+      } else {
+        this.$emit('error-message', 'Invalid points value.')
+      }
+    }
+  },
+  template: `<div>
+              <div v-if="!edit" v-on:dblclick="edit = true">{{points}}</div>
+              <div v-else class="field has-addons">
+                <p class="control">
+                  <button class="button is-small is-danger" @click="edit = false">
+                    <span class="icon is-small">
+                      <i class="fas fa-times is-small"></i>
+                    </span>
+                  </button>
+                </p>
+                <p class="control">
+                  <div class=" is-small">
+                    <input type="text" class="input is-small" v-model="points"/>
+                  </div>
+                </p>
+                <p class="control">
+                  <button class="button is-small is-success" @click='updatePlayerPoints()'>
+                    <span class="icon is-small">
+                      <i class="fas fa-check is-small"></i>
+                    </span>
+                  </button>
+                </p>
+              </div>
+            </div>`
+})
+
 const App = new Vue({
   el: '#app',
   data: function(){
@@ -133,7 +183,8 @@ const App = new Vue({
     this.loadBenchFromStorage()
     this.loadTeamsFromStorage()
     this.getCountPlayerTimesUsed()
-    this.setPlayerSort(this.playerSort, false)
+    this.getAllTeamPoints()
+    this.setPlayerSort(this.playersSort, false)
     this.setPoolSort(this.poolSort, false)
     this.setBenchSort(this.benchSort, false)
     this.setTeamSort(this.teamSort, false)
@@ -237,8 +288,9 @@ const App = new Vue({
         window.localStorage.setItem('draftTeams', encodedTeams)
         this.teams = this.draft.teams
         this.displayTeams = Object.values(this.teams)
-        this.setPlayerSort(this.playerSort, false)
+        this.setPlayerSort(this.playersSort, false)
         this.getAllTeamCutCount()
+        this.getAllTeamPoints()
         this.setTeamSort(this.teamSort, false)
         this.getCountPlayerTimesUsed()
       } catch (error) {
@@ -266,8 +318,9 @@ const App = new Vue({
         window.localStorage.setItem('draftTeams', encodedTeams)
         this.teams = this.draft.teams
         this.displayTeams = Object.values(this.teams)
-        this.setPlayerSort(this.playerSort, false)
+        this.setPlayerSort(this.playersSort, false)
         this.getAllTeamCutCount()
+        this.getAllTeamPoints()
         this.setTeamSort(this.teamSort, false)
         this.getCountPlayerTimesUsed()
       } catch (error) {
@@ -487,7 +540,8 @@ const App = new Vue({
           this.buildTeams(true)
           this.notificationMessage = "Edited Teams: " + editedTeams.toString()
           this.getAllTeamCutCount()
-          setTimeout(() => { this.notificationMessage = false }, 5000); 46,54,58,63
+          this.getAllTeamPoints()
+          setTimeout(() => { this.notificationMessage = false }, 5000);
         }
       }      
     },
@@ -560,7 +614,7 @@ const App = new Vue({
       this.importObjects(data.bench, 'bench')
       this.importObjects(data.manualBench, 'manualBench')
       this.importObjects(data.teams, 'teams')
-      this.setPlayerSort(this.playerSort, false)
+      this.setPlayerSort(this.playersSort, false)
       this.setPoolSort(this.poolSort, false)
       this.setBenchSort(this.benchSort, false)
       this.setTeamSort(this.teamSort, false)
@@ -619,6 +673,7 @@ const App = new Vue({
           this.dbEntryName = data.name
         }
         this.importProgramData(data.data)
+        this.getAllTeamPoints()
         this.setTab('import-players')
       }
     },
@@ -750,7 +805,40 @@ const App = new Vue({
         let encodedTeams = JSON.stringify(Object.values(this.teams))
         window.localStorage.setItem('draftTeams', encodedTeams)
       }
-      
-    }
+    },
+    displayErrorMessage(message) {
+      this.notificationType = 'failure'
+      this.notificationMessage = message
+      setTimeout(() => { this.notificationMessage = false }, 3000);
+    },
+    updatePlayerPoints(emitData) {
+      let playerID = emitData.playerID
+      let points = parseFloat(emitData.points)
+      Vue.set(this.players[playerID], 'points', points)
+      let encodedPlayers = JSON.stringify(Object.values(this.players))
+      window.localStorage.setItem('fileContent', encodedPlayers)
+      this.getAllTeamPoints()
+      let encodedTeams = JSON.stringify(Object.values(this.teams))
+      window.localStorage.setItem('draftTeams', encodedTeams)
+      this.setPlayerSort(this.playersSort, false)
+    },
+    getTeamPoints(team) {
+      let teamPoints = 0.0
+      for(const [key, teamPlayer] of Object.entries(team.players)){
+        let player = this.players[teamPlayer.ID]
+        if(player.hasOwnProperty('points')) {
+          let points = parseFloat(player.points) 
+          if(!isNaN(points) && points > 0) {
+            teamPoints += points
+          }
+        }
+      }
+      return teamPoints
+    },
+    getAllTeamPoints() {
+      for(const [key, team] of Object.entries(this.teams)){
+        this.teams[key].points = this.getTeamPoints(team)
+      }
+    },
   },
 })

@@ -108,6 +108,10 @@
                                     <span v-if="playersSort == 'teamCount' && playersDesc == 'true'" class="icon" :key="playersDesc"> <i class="fas fa-caret-down"></i></span>
                                     <span v-else-if="playersSort == 'teamCount' && playersDesc == 'false'" class="icon" :key="playersDesc"> <i class="fas fa-caret-up" ></i></span>
                                 </span></th>
+                                <th><span class="icon-text is-clickable" @click="setPlayerSort('points')"> <span>Points</span>
+                                    <span v-if="playersSort == 'points' && playersDesc == 'true'" class="icon" :key="playersDesc"> <i class="fas fa-caret-down"></i></span>
+                                    <span v-else-if="playersSort == 'points' && playersDesc == 'false'" class="icon" :key="playersDesc"> <i class="fas fa-caret-up" ></i></span>
+                                </span></th>
                                 <th>Actions</th>
                             </thead>
                             <template v-for="(row, rowIndex) in displayPlayers">
@@ -116,6 +120,9 @@
                                     <td>{{row.Salary}}</td>
                                     <td>{{row.AvgPointsPerGame}}</td>
                                     <td>{{row.teamCount ? row.teamCount : 0}} </td>
+                                    <td>
+                                        <player-points :key="row.ID" :player="row" @error-message="displayErrorMessage" @update-points="updatePlayerPoints"></player-points>
+                                    </td>
                                     <td>
                                         <p class="buttons">
                                             <button v-if="getCutStatus(row.ID)" class="button is-success is-small is-outlined" title="Click will mark for missed cut." @click="setMissedCut(row.ID)">
@@ -318,6 +325,10 @@
                                     <span v-if="teamSort == 'teamCutCount' && teamDesc == 'true'" class="icon" :key="teamDesc"> <i class="fas fa-caret-down"></i></span>
                                     <span v-else-if="teamSort == 'teamCutCount' && teamDesc == 'false'" class="icon" :key="teamDesc"> <i class="fas fa-caret-up" ></i></span>
                                 </span></th>
+                                <th><span class="icon-text is-clickable" @click="setTeamSort('points')"> <span>Total Points</span>
+                                    <span v-if="teamSort == 'points' && teamDesc == 'true'" class="icon" :key="teamDesc"> <i class="fas fa-caret-down"></i></span>
+                                    <span v-else-if="teamSort == 'points' && teamDesc == 'false'" class="icon" :key="teamDesc"> <i class="fas fa-caret-up" ></i></span>
+                                </span></th>
                             </thead>
                             <template v-for="(team, teamIndex) of displayTeams" > 
                                 <tr :key="teamIndex" v-if="textSearch(team.players)" :class="team.id == highlightTeam ? 'has-text-light has-background-grey-darker' : ''">
@@ -329,7 +340,7 @@
                                     <td>{{team.averagePoints}}</td>
                                     <td>{{team.differential}}</td>
                                     <td>{{team.teamCutCount}}</td>
-                                    
+                                    <td>{{team.points}}</td>
                                 </tr>
                             </template>
                         </table>
