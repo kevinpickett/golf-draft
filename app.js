@@ -1,3 +1,59 @@
+Vue.component('player-replace', {
+  props: ['player', 'team', 'players', 'settings'],
+  data: function() {
+    return {
+      edit: false,
+      playerID: this.player.ID
+    }
+  },
+  methods: {
+    isEligible(replacement) {
+      let isEligible = false
+      if(!this.team.id.includes(replacement.ID) || replacement.ID == this.player.ID) {
+        let cap = parseInt(this.team.salaryCap) - parseInt(this.player.Salary) + parseInt(replacement.Salary)
+        isEligible = (cap >= parseInt(this.settings.lowerLimit) && cap <= parseInt(this.settings.upperLimit))
+      } 
+      return isEligible
+    },
+    saveReplacementPlayer() {
+      let emitData = {
+        oldPlayerID: this.player.ID,
+        newPlayerID: this.playerID,
+        teamID: this.team.id
+      }
+      this.$emit('save-replacement-child', emitData)
+    }
+  },
+  template: `<div>
+              <span v-if="!edit" v-on:dblclick="edit = true">{{player.displayName}}</span>
+              <div v-else class="field has-addons">
+                <p class="control">
+                  <button class="button is-small is-danger" @click="edit = false">
+                    <span class="icon is-small">
+                      <i class="fas fa-times is-small"></i>
+                    </span>
+                  </button>
+                </p>
+                <p class="control">
+                  <div class="select is-small">
+                    <select v-model="playerID">
+                      <template v-for="item in players">
+                        <option v-if="isEligible(item)" :key="item.ID" v-bind:value="item.ID">{{item.displayName}}</option>
+                      </template>
+                    </select>
+                  </div>
+                </p>
+                <p class="control">
+                  <button class="button is-small is-success" @click='saveReplacementPlayer()'>
+                    <span class="icon is-small">
+                      <i class="fas fa-check is-small"></i>
+                    </span>
+                  </button>
+                </p>
+              </div>
+            </div>`
+})
+
 const App = new Vue({
   el: '#app',
   data: function(){
@@ -47,7 +103,8 @@ const App = new Vue({
       reportType: '',
       cutReportData: {},
       password: '',
-      showScreen: false
+      highlightTeam: '',
+      showScreen: true
     }
   },
   created: function() {
@@ -667,6 +724,33 @@ const App = new Vue({
         cutReportData[team.teamCutCount] += 1
       }) 
       this.cutReportData = cutReportData
+    },
+    saveReplacement(emitData) {
+      let oldTeam = this.teams[emitData.teamID]
+      let newPlayer = this.players[emitData.newPlayerID]
+
+      let newTeam = new Team(this.settings.teamSize)
+      newTeam.players = JSON.parse(JSON.stringify(oldTeam.players))
+      delete newTeam.players[emitData.oldPlayerID]
+      newTeam.players[newPlayer.ID] = newPlayer
+      newTeam.setComputedValues()
+      if(this.teams.hasOwnProperty(newTeam.id)) {
+        this.notificationType = 'failure'
+        this.notificationMessage = 'Team already exists.'
+        setTimeout(() => { this.notificationMessage = false }, 3000);
+      } else {
+        this.teams[newTeam.id] = newTeam 
+        this.highlightTeam = newTeam.id
+        Vue.set(this.teams, newTeam.id, newTeam)
+        Vue.delete(this.teams, oldTeam.id)
+        this.getAllTeamCutCount()
+        this.setTeamSort(this.teamSort, false)
+        this.getCountPlayerTimesUsed()
+        setTimeout(() => { this.highlightTeam = '' }, 2000);
+        let encodedTeams = JSON.stringify(Object.values(this.teams))
+        window.localStorage.setItem('draftTeams', encodedTeams)
+      }
+      
     }
   },
 })

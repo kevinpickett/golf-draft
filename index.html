@@ -320,10 +320,10 @@
                                 </span></th>
                             </thead>
                             <template v-for="(team, teamIndex) of displayTeams" > 
-                                <tr :key="teamIndex" v-if="textSearch(team.players)">
+                                <tr :key="teamIndex" v-if="textSearch(team.players)" :class="team.id == highlightTeam ? 'has-text-light has-background-grey-darker' : ''">
                                     
                                     <td v-for="(player, playerIndex) of team.players" :key="playerIndex">
-                                        <span>{{player.displayName}}</span>
+                                        <player-replace v-on:save-replacement-child="saveReplacement"  v-bind:player="player" v-bind:team="team" v-bind:players="draftPool" v-bind:settings="settings"></player-replace>
                                     </td>
                                     <td>{{team.salaryCap}}</td>
                                     <td>{{team.averagePoints}}</td>
