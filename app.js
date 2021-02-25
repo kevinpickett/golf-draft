@@ -104,7 +104,7 @@ const App = new Vue({
       cutReportData: {},
       password: '',
       highlightTeam: '',
-      showScreen: true
+      showScreen: false
     }
   },
   created: function() {
