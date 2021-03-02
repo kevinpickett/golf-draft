@@ -104,6 +104,51 @@ Vue.component('player-points', {
             </div>`
 })
 
+Vue.component('database-import', {
+  data: function() {
+    return {
+      uploadMode: false,
+      fileName: ''
+    }
+  },
+  methods: {
+    async importDatabase(evt) {
+      let importer = new Database()
+      await importer.importFromBackup(evt).then(result => {
+        this.$emit('database-updated', result)
+        this.uploadMode = false
+      })
+    }
+  },
+  template: `<div class="level-item">
+              <button v-if="!uploadMode" type="button" class="button is-info" @click="uploadMode = true;">
+                  <span class="icon is-small">
+                      <i class="fas fa-cloud-download-alt fa-lg"></i>
+                  </span>
+              </button>
+              <div v-else>
+                <div class="file has-name is-info">
+                  <label class="file-label">
+                      <input class="file-input" type="file" name="fileinput" id="fileinput"
+                          @change="importDatabase">
+                      <span class="file-cta">
+                          <span class="file-icon">
+                              <i class="fas fa-upload"></i>
+                          </span>
+                          <span class="file-label">
+                              Choose a file…
+                          </span>
+                      </span>
+                      <span class="file-name">
+
+                      </span>
+                  </label>
+                </div>
+              </div>
+              
+            </div>`
+})
+
 const App = new Vue({
   el: '#app',
   data: function(){
@@ -154,7 +199,7 @@ const App = new Vue({
       cutReportData: {},
       password: '',
       highlightTeam: '',
-      showScreen: false
+      showScreen: true
     }
   },
   created: function() {
@@ -840,5 +885,20 @@ const App = new Vue({
         this.teams[key].points = this.getTeamPoints(team)
       }
     },
+    exportDB() {
+      this.database.download()
+    },
+    reloadDatabase(result) {
+      if(result) {
+        this.database.load()
+        this.notificationType = 'success'
+        this.notificationMessage = 'New entries added.'
+        setTimeout(() => { this.notificationMessage = false }, 3000);
+      } else {
+        this.notificationType = 'failure'
+        this.notificationMessage = 'Invalid file or no new entries found.'
+        setTimeout(() => { this.notificationMessage = false }, 3000);
+      }
+    }
   },
 })
