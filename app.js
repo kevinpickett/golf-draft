@@ -176,7 +176,8 @@ const App = new Vue({
       manualBench: {},
       cuts: [],
       draft: null,
-      tab: 'import-players',
+      //tab: 'import-players',
+      tab: '',
       notificationMessage: false,
       notificationType: '',
       database: new Database(),
@@ -197,15 +198,33 @@ const App = new Vue({
       },
       reportType: '',
       cutReportData: {},
-      password: '',
       highlightTeam: '',
-      showScreen: true
+      email: 'kevinpickett90@gmail.com',
+      password: '',
+      user: null,
+      authLoaded: false,
+      loginError: ''
     }
   },
-  created: function() {
-    window.addEventListener('keydown', this.passcode)
-  },
   mounted: function() {
+    // Auth
+    firebase.auth().onAuthStateChanged((user) => {
+      if (user) {
+        // User is signed in, see docs for a list of available properties
+        // https://firebase.google.com/docs/reference/js/firebase.User
+        var uid = user.uid;
+        this.user = user
+        this.setTab('import-players')
+        this.authLoaded = true
+        // ...
+      } else {
+        this.user = null
+        this.setTab('login')
+        this.authLoaded = true
+      }
+    });
+
+    // Data
     let settings = new Settings()
     if(settings) {
       this.settings.lowerLimit = settings.lowerLimit
@@ -234,14 +253,16 @@ const App = new Vue({
     this.setBenchSort(this.benchSort, false)
     this.setTeamSort(this.teamSort, false)
   },
-  methods: {
-    passcode(e) {
-      this.password += e.key
-      if(this.password.includes('blake')){
-        this.showScreen = true
-        window.removeEventListener('keydown', this.passcode)
+  computed: {
+    authenticated: function() {
+      if(this.user && this.user.uid) {
+        return true
+      } else {
+        return false
       }
-    },
+    }
+  },
+  methods: {
     async loadPlayers(event) {
       window.localStorage.removeItem('draftCuts')
       await importCSV(event)
@@ -665,6 +686,7 @@ const App = new Vue({
       this.setTeamSort(this.teamSort, false)
       this.settings = data.settings
       this.cuts = data.cuts
+      this.getAllTeamCutCount()
     },
     async importAllData(event) {
       await importData(event)
@@ -899,6 +921,29 @@ const App = new Vue({
         this.notificationMessage = 'Invalid file or no new entries found.'
         setTimeout(() => { this.notificationMessage = false }, 3000);
       }
+    },
+    login() {
+      firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION)
+      .then(() => {
+        return firebase.auth().signInWithEmailAndPassword(this.email, this.password)
+      }).then(() => {
+        this.loginError = ''
+        this.email = ''
+        this.password = ''
+      })
+      .catch((error) => {
+        // Handle Errors here.
+        var errorCode = error.code;
+        var errorMessage = error.message;
+        this.loginError = errorMessage
+      });
+    },
+    logout() {
+      firebase.auth().signOut().then(() => {
+        this.setTab('login')
+      }).catch((error) => {
+        // An error happened.
+      });
     }
   },
 })
